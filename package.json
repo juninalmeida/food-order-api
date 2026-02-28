@@ -1,0 +1,9 @@
+{
+  "name": "food-order-api",
+  "version": "1.0.0",
+  "description": "API designada a gerenciar pedidos das mesas de um restaurante.",
+  "main": "index.js",
+  "scripts": {},
+  "author": "Horácio Júnior",
+  "license": "ISC"
+}
