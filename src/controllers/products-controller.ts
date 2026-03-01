@@ -34,6 +34,14 @@ class ProductsController {
       next(error);
     }
   }
+
+  async update(request: Request, response: Response, next: NextFunction) {
+    try {
+      return response.json({ message: "update" });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export { ProductsController };
