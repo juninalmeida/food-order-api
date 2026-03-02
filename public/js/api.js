@@ -1,4 +1,5 @@
-const API_BASE = 'http://localhost:3333';
+// Use relative path for API calls since frontend is served by the same server
+const API_BASE = '';
 export async function fetchAPI(endpoint, options = {}) {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {

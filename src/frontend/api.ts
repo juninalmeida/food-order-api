@@ -1,6 +1,7 @@
 import { Product, Table, TableSession, OrderItem } from "./types.js";
 
-const API_BASE = 'http://localhost:3333';
+// Use relative path for API calls since frontend is served by the same server
+const API_BASE = '';
 
 export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
     try {
@@ -8,6 +9,7 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
             headers: { 'Content-Type': 'application/json' },
             ...options
         });
+
         
         if(!res.ok) {
             console.error(`API Error on ${endpoint}: ${res.status} ${res.statusText}`);
