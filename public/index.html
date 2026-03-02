@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <title>Chef Quest</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/styles/main.css">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+</head>
+<body class="bg-[#0d0d0d] text-[#f5f5f5] font-['Inter'] antialiased selection:bg-[#f59e0b]/30 overflow-x-hidden min-h-screen flex flex-col relative z-0">
+
+    <!-- Kitchen Background Elements -->
+    <div class="fixed inset-0 z-[-2] kitchen-bg pointer-events-none"></div>
+    <div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden" aria-hidden="true">
+        <!-- Chapéu de Chef -->
+        <div class="absolute animate-u1 flex items-center justify-center utensil-wrapper">
+            <iconify-icon icon="solar:chef-hat-linear" stroke-width="1.5" class="text-[4rem] text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.6)] utensil"></iconify-icon>
+        </div>
+        <!-- Taça de Vinho -->
+        <div class="absolute animate-u2 flex items-center justify-center utensil-wrapper">
+            <iconify-icon icon="solar:wineglass-linear" stroke-width="1.5" class="text-[3.5rem] text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.6)] utensil"></iconify-icon>
+        </div>
+        <!-- Prato -->
+        <div class="absolute animate-u3 flex items-center justify-center utensil-wrapper">
+            <iconify-icon icon="solar:plate-linear" stroke-width="1.5" class="text-[3.5rem] text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.6)] utensil"></iconify-icon>
+        </div>
+        <!-- Xícara/Sopa -->
+        <div class="absolute animate-u4 flex items-center justify-center utensil-wrapper">
+            <iconify-icon icon="solar:cup-hot-linear" stroke-width="1.5" class="text-[4rem] text-[#f59e0b] drop-shadow-[0_0_12px_rgba(245,158,11,0.6)] utensil"></iconify-icon>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 sm:top-auto sm:bottom-6 sm:left-6 w-full sm:w-[24rem] z-50 flex flex-col gap-3 px-4 sm:px-0 pointer-events-none"></div>
+
+    <!-- App Wrapper -->
+    <div id="app" class="flex-grow flex flex-col w-full h-full relative z-10">
+
+        <!-- SCREEN 1: Table Selection -->
+        <section id="screen-tables" class="flex-grow flex flex-col p-[clamp(1rem,4vw,2rem)] safe-pt safe-pb">
+            <header class="text-center mb-[clamp(2rem,6vw,4rem)]">
+                <h1 class="font-['Cinzel'] tracking-tight font-medium text-fluid-logo bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] bg-clip-text text-transparent uppercase drop-shadow-md">Chef Quest</h1>
+                <p class="text-fluid-body text-[#9ca3af] mt-2 font-light">Selecione sua mesa para iniciar a jornada</p>
+            </header>
+
+            <div class="flex-grow flex items-center justify-center">
+                <div id="tables-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-[clamp(1rem,3vw,2rem)] w-full max-w-4xl mx-auto">
+                    <!-- Tables injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: Menu -->
+        <section id="screen-menu" class="hidden flex-grow flex flex-col relative">
+            <header class="sticky top-0 z-30 glass-panel border-b-0 border-x-0 rounded-none px-[clamp(1rem,4vw,2rem)] py-[clamp(0.75rem,2vw,1rem)] safe-pt shadow-md">
+                <div class="flex items-center justify-between max-w-7xl mx-auto">
+                    <div class="flex items-center gap-3">
+                        <h1 class="font-['Cinzel'] tracking-tight font-medium text-fluid-logo text-[#f5f5f5] uppercase hidden sm:block">Chef Quest</h1>
+                        <span class="font-['Cinzel'] tracking-tight font-medium text-fluid-logo text-[#f5f5f5] uppercase sm:hidden">CQ</span>
+                        <div class="h-6 w-[1px] bg-[#2a2a2a] mx-2"></div>
+                        <div class="flex flex-col">
+                            <span class="text-fluid-xs text-[#9ca3af] uppercase tracking-widest font-medium">Mesa <span id="current-table-display" class="text-[#f5f5f5]">--</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <div class="flex flex-col items-end">
+                            <span id="player-level-name" class="font-['Cinzel'] tracking-tight font-medium text-fluid-lvl text-[#f59e0b]">Aprendiz</span>
+                            <div class="flex items-center gap-2 mt-1">
+                                <iconify-icon id="player-badge" icon="solar:shield-star-linear" stroke-width="1.5" class="text-[1.25rem] text-[#9ca3af]"></iconify-icon>
+                                <div class="w-24 sm:w-32 h-1.5 bg-[#0d0d0d] rounded-full overflow-hidden border border-[#2a2a2a]">
+                                    <div id="xp-bar-fill" class="h-full bg-gradient-to-r from-[#f59e0b] to-[#fbbf24] w-0 transition-all duration-500 ease-out"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-grow p-[clamp(1rem,4vw,2rem)] pb-32 max-w-7xl mx-auto w-full">
+                <div class="flex items-center justify-between mb-6 sm:mb-8">
+                    <h2 class="font-['Cinzel'] tracking-tight font-medium text-fluid-sec text-[#f5f5f5]">O Cardápio</h2>
+                </div>
+                
+                <div id="menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[clamp(0.75rem,3vw,1.5rem)]">
+                    <!-- Menu items injected here -->
+                </div>
+            </main>
+
+            <!-- Floating Cart Button -->
+            <button id="btn-floating-cart" class="fixed bottom-[clamp(1.5rem,4vw,3rem)] right-[clamp(1.5rem,4vw,3rem)] w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-[#1a1a1a] to-[#2a2a2a] border border-[#f59e0b]/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex items-center justify-center hover:scale-105 transition-transform z-40 clickable">
+                <iconify-icon icon="solar:cart-large-linear" stroke-width="1.5" class="text-[1.5rem] sm:text-[1.75rem] text-[#f5f5f5]"></iconify-icon>
+                <div id="cart-badge" class="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#ef4444] text-[#f5f5f5] text-fluid-xs font-['JetBrains_Mono'] font-medium flex items-center justify-center shadow-lg hidden">0</div>
+            </button>
+        </section>
+
+        <!-- SCREEN 3: Active Orders (Sidebar on Desktop, Full on Mobile) -->
+        <section id="screen-orders" class="hidden fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm transition-opacity">
+            <div class="w-full md:w-[28rem] h-full bg-[#0d0d0d]/95 backdrop-blur-md border-l border-[#2a2a2a] flex flex-col shadow-2xl safe-pt safe-pb transform transition-transform duration-300 translate-x-0">
+                <header class="p-[clamp(1rem,3vw,1.5rem)] border-b border-[#2a2a2a] flex items-center justify-between">
+                    <h2 class="font-['Cinzel'] tracking-tight font-medium text-fluid-sec text-[#f5f5f5]">Seus Pedidos</h2>
+                    <button id="btn-close-orders" class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] transition-colors clickable">
+                        <iconify-icon icon="solar:close-linear" stroke-width="1.5" class="text-[1.25rem]"></iconify-icon>
+                    </button>
+                </header>
+
+                <div id="orders-list" class="flex-grow overflow-y-auto p-[clamp(1rem,3vw,1.5rem)] flex flex-col gap-4">
+                    <!-- Orders injected here -->
+                </div>
+
+                <footer class="p-[clamp(1rem,3vw,1.5rem)] bg-[#1a1a1a]/80 border-t border-[#2a2a2a] flex flex-col gap-4">
+                    <div class="flex items-end justify-between">
+                        <span class="text-fluid-body text-[#9ca3af]">Total da Conta</span>
+                        <span id="orders-total" class="font-['JetBrains_Mono'] font-medium text-fluid-total text-[#f5f5f5]">R$ 0,00</span>
+                    </div>
+                    <button id="btn-checkout" class="w-full py-4 rounded-xl bg-gradient-to-r from-[#ef4444] to-[#f59e0b] text-[#111111] font-medium text-fluid-body flex items-center justify-center gap-2 hover:opacity-90 transition-opacity clickable shadow-lg">
+                        <iconify-icon icon="solar:bill-check-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon>
+                        Fechar Conta
+                    </button>
+                </footer>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: Summary / Reward -->
+        <section id="screen-summary" class="hidden flex-grow flex flex-col items-center justify-center p-[clamp(1rem,4vw,2rem)] safe-pt safe-pb relative overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.1)_0%,transparent_70%)] pointer-events-none"></div>
+            
+            <div class="w-full max-w-2xl bg-[#1a1a1a]/90 backdrop-blur-md border border-[#2a2a2a] rounded-2xl p-[clamp(1.5rem,5vw,3rem)] flex flex-col items-center text-center relative z-10 shadow-2xl">
+                <iconify-icon icon="solar:cup-star-linear" stroke-width="1.5" class="text-[clamp(3rem,10vw,5rem)] text-[#f59e0b] mb-4 drop-shadow-md"></iconify-icon>
+                <h1 class="font-['Cinzel'] tracking-tight font-medium text-fluid-hero text-[#f5f5f5] mb-2">Sessão Finalizada</h1>
+                <p class="text-fluid-body text-[#9ca3af] mb-8">Sua jornada gastronômica chegou ao fim.</p>
+
+                <div class="w-full bg-[#0d0d0d]/80 border border-[#2a2a2a] rounded-xl p-6 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="text-center sm:text-left">
+                        <span class="block text-fluid-xs text-[#9ca3af] uppercase tracking-widest mb-1">Total Gasto</span>
+                        <span id="summary-total" class="font-['JetBrains_Mono'] font-medium text-fluid-h text-[#f5f5f5]">R$ 0,00</span>
+                    </div>
+                    <div class="h-[1px] w-full sm:h-12 sm:w-[1px] bg-[#2a2a2a]"></div>
+                    <div class="text-center sm:text-right">
+                        <span class="block text-fluid-xs text-[#9ca3af] uppercase tracking-widest mb-1">XP Ganho</span>
+                        <span id="summary-xp" class="font-['JetBrains_Mono'] font-medium text-fluid-h text-[#22c55e]">+0 XP</span>
+                    </div>
+                </div>
+
+                <div class="w-full mb-10">
+                    <h3 class="font-['Cinzel'] tracking-tight font-medium text-fluid-sec text-[#f5f5f5] mb-4 text-left">Conquistas Desbloqueadas</h3>
+                    <div id="summary-achievements" class="flex overflow-x-auto sm:grid sm:grid-cols-2 gap-3 pb-4 sm:pb-0 snap-x snap-mandatory hide-scrollbar" style="scrollbar-width: none;">
+                        <!-- Achievments injected here -->
+                    </div>
+                </div>
+
+                <button id="btn-new-table" class="w-full sm:w-auto min-w-[320px] py-4 px-8 rounded-xl bg-[#f5f5f5] text-[#0d0d0d] font-medium text-fluid-body hover:bg-[#e5e5e5] transition-colors clickable shadow-md">
+                    Nova Mesa
+                </button>
+            </div>
+        </section>
+
+        <!-- Quantity Selector Modal -->
+        <div id="modal-qty" class="hidden fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div class="w-full sm:w-[24rem] bg-[#1a1a1a] border border-[#2a2a2a] rounded-t-2xl sm:rounded-2xl p-[clamp(1.5rem,4vw,2rem)] safe-pb transform transition-transform translate-y-full sm:translate-y-0 duration-300 shadow-2xl">
+                <h3 id="modal-qty-name" class="font-['Cinzel'] tracking-tight font-medium text-fluid-h text-[#f5f5f5] mb-1 truncate">Produto</h3>
+                <p id="modal-qty-price" class="font-['JetBrains_Mono'] text-fluid-price text-[#f59e0b] mb-6">R$ 0,00</p>
+                
+                <div class="flex items-center justify-between bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl p-2 mb-6">
+                    <button id="btn-qty-minus" class="w-12 h-12 flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] clickable"><iconify-icon icon="solar:minus-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon></button>
+                    <span id="modal-qty-val" class="font-['JetBrains_Mono'] font-medium text-fluid-h text-[#f5f5f5]">1</span>
+                    <button id="btn-qty-plus" class="w-12 h-12 flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] clickable"><iconify-icon icon="solar:add-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon></button>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btn-qty-cancel" class="flex-1 py-4 rounded-xl border border-[#2a2a2a] text-[#9ca3af] font-medium text-fluid-body hover:bg-[#2a2a2a]/50 transition-colors clickable">Cancelar</button>
+                    <button id="btn-qty-confirm" class="flex-1 py-4 rounded-xl bg-[#f5f5f5] text-[#0d0d0d] font-medium text-fluid-body hover:bg-[#e5e5e5] transition-colors clickable">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend logic will be injected here via our typescript build -->
+    <script type="module" src="/js/main.js"></script>
+
+</body>
+</html>
