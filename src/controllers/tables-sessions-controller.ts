@@ -32,14 +32,28 @@ class TablesSessionsController {
     }
   }
 
-  async index(Request: Request, response: Response, next: NextFunction) {
+  async index(request: Request, response: Response, next: NextFunction) {
     try {
       const sessions =
-        await knex<TablesSessionsController>("tables_sessions").orderBy(
+        await knex<TablesSessionsRepository>("tables_sessions").orderBy(
           "closed_at",
         );
 
       return response.json(sessions);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async update(request: Request, response: Response, next: NextFunction) {
+    try {
+      const id = z
+        .string()
+        .transform((value) => Number(value))
+        .refine((value) => !isNaN(value), { message: "id must be a number" })
+        .parse(request.params.id);
+
+      return response.json();
     } catch (error) {
       next(error);
     }
