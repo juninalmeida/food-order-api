@@ -1,0 +1,54 @@
+import { Product, Table, TableSession, OrderItem } from "./types.js";
+
+const API_BASE = 'http://localhost:3333';
+
+export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
+    try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            headers: { 'Content-Type': 'application/json' },
+            ...options
+        });
+        
+        if(!res.ok) {
+            console.error(`API Error on ${endpoint}: ${res.status} ${res.statusText}`);
+            return null;
+        }
+        
+        // Some endpoints like POST, PATCH might return empty bodies
+        const text = await res.text();
+        return text ? JSON.parse(text) : null;
+    } catch (err) {
+        console.warn(`API falhou para ${endpoint}. Verifique se o backend está rodando.`);
+        return null;
+    }
+}
+
+export const api = {
+    getTables: () => fetchAPI<Table[]>('/tables'),
+    
+    getSessions: () => fetchAPI<TableSession[]>('/tables-sessions'),
+    
+    openSession: (tableId: number) => fetchAPI<any>('/tables-sessions', {
+        method: 'POST',
+        body: JSON.stringify({ table_id: tableId })
+    }),
+    
+    closeSession: (sessionId: number) => fetchAPI<any>(`/tables-sessions/${sessionId}`, {
+        method: 'PATCH'
+    }),
+    
+    getProducts: () => fetchAPI<Product[]>('/products'),
+    
+    createOrder: (sessionId: number, productId: number, quantity: number) => fetchAPI<any>('/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+            table_session_id: sessionId,
+            product_id: productId,
+            quantity: quantity
+        })
+    }),
+    
+    getOrders: (sessionId: number) => fetchAPI<OrderItem[]>(`/orders/table-session/${sessionId}`),
+    
+    getOrdersTotal: (sessionId: number) => fetchAPI<{ total: number, quantity: number }>(`/orders/table-session/${sessionId}/total`)
+};
