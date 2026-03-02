@@ -1,5 +1,6 @@
 import { AppState, ACHIEVEMENTS_DEF } from "./state.js";
 import { api } from "./api.js";
+import { Product } from "./types.js";
 
 // Helper Functions
 function formatCurrency(val: number): string {
@@ -337,4 +338,36 @@ export function renderSummary() {
             `;
         });
     }
+}
+
+export function openModalUI(product: Product, qty: number = 1) {
+    const nameEl = document.getElementById('modal-qty-name');
+    const priceEl = document.getElementById('modal-qty-price');
+    const valEl = document.getElementById('modal-qty-val');
+    
+    if(nameEl) nameEl.innerText = product.name;
+    if(priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
+    if(valEl) valEl.innerText = qty.toString();
+    
+    const m = document.getElementById('modal-qty');
+    if(m) {
+        m.classList.remove('hidden');
+        setTimeout(() => m.firstElementChild?.classList.remove('translate-y-full'), 10);
+    }
+}
+
+export function closeModalUI() {
+    const m = document.getElementById('modal-qty');
+    if(m) {
+        m.firstElementChild?.classList.add('translate-y-full');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
+}
+
+export function updateModalQtyDisplay(product: Product, qty: number) {
+    const valEl = document.getElementById('modal-qty-val');
+    if(valEl) valEl.innerText = qty.toString(); 
+
+    const priceEl = document.getElementById('modal-qty-price');
+    if(priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
 }
