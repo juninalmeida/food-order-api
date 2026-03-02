@@ -114,12 +114,12 @@ export async function renderScreen1() {
         const session = activeSessions.find(s => s.table_id === t.id);
         const isOccupied = !!session;
         const card = document.createElement('div');
-        card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#22c55e]/30 hover-glow animate-pulse-green'}`;
+        card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
         let iconHtml = isOccupied ? `<iconify-icon icon="solar:fire-bold" class="text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4"></iconify-icon>` : '';
         card.innerHTML = `
             ${iconHtml}
             <span class="font-['Cinzel'] tracking-tight font-medium text-[clamp(2rem,8vw,4rem)] text-[#f5f5f5] leading-none mb-2">${t.table_number.toString().padStart(2, '0')}</span>
-            <span class="text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#22c55e]'}">${isOccupied ? 'Ocupada' : 'Livre'}</span>
+            <span class="text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#f59e0b]'}">${isOccupied ? 'Ocupada' : 'Livre'}</span>
         `;
         card.onclick = async () => {
             if (isOccupied && session) {
@@ -211,32 +211,63 @@ export async function renderOrders() {
     const list = document.getElementById('orders-list');
     if (!list)
         return;
-    list.innerHTML = '<div class="text-center text-[#9ca3af] py-10">Sincronizando...</div>';
-    let apiOrders = await api.getOrders(AppState.currentSessionId);
-    let apiTotalInfo = await api.getOrdersTotal(AppState.currentSessionId);
-    if (!apiOrders || apiOrders.length === 0) {
-        apiOrders = AppState.orders;
-    }
-    let apiTotal = apiTotalInfo ? apiTotalInfo.total : AppState.orders.reduce((sum, o) => sum + o.total, 0);
+    // Removemos o sync total com a API aqui pois o status real (preparando/comido) agora é mantido localmente
+    // Para simplificar a demonstração, usaremos apenas a AppState.orders.
+    const orders = AppState.orders;
     list.innerHTML = '';
-    if (apiOrders.length === 0) {
+    if (orders.length === 0) {
         list.innerHTML = '<div class="text-center text-[#9ca3af] py-10">Nenhum pedido realizado.</div>';
     }
     else {
-        apiOrders.forEach(o => {
+        orders.forEach(o => {
             const totalItem = o.total || (o.price * o.quantity);
-            list.innerHTML += `
-                <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex justify-between items-center">
-                    <div class="flex flex-col">
-                        <span class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]"><span class="text-[#f59e0b]">${o.quantity}x</span> ${o.name}</span>
-                        <span class="font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5">${formatCurrency(o.price)} un</span>
+            let statusHtml = '';
+            if (o.status === 'preparing') {
+                statusHtml = `
+                    <div class="mt-3 w-full">
+                        <span class="text-fluid-xs text-[#f59e0b] status-preparing"><iconify-icon icon="solar:chef-hat-linear" class="mr-1"></iconify-icon> Preparando...</span>
+                        <div class="prep-progress-bar"><div class="prep-progress-fill"></div></div>
                     </div>
-                    <span class="font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]">${formatCurrency(totalItem)}</span>
+                `;
+            }
+            else if (o.status === 'ready') {
+                statusHtml = `
+                    <button class="mt-3 w-full py-2 rounded-lg bg-[#22c55e]/20 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/30 transition-colors clickable btn-eat flex items-center justify-center gap-2" data-id="${o.id}">
+                        <iconify-icon icon="solar:confetti-linear" class="text-[1.1rem]"></iconify-icon>
+                        Comer Pedido (+${o.quantity * 10} XP)
+                    </button>
+                `;
+            }
+            else if (o.status === 'consumed') {
+                statusHtml = `
+                    <div class="mt-3 w-full flex items-center gap-2 text-fluid-xs text-[#9ca3af]">
+                        <iconify-icon icon="solar:check-circle-linear" class="text-[1.1rem] text-[#22c55e]"></iconify-icon> Consumido
+                    </div>
+                `;
+            }
+            list.innerHTML += `
+                <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex flex-col justify-between items-start transition-all ${o.status === 'ready' ? 'border-[#22c55e]/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : ''}">
+                    <div class="flex justify-between items-start w-full">
+                        <div class="flex flex-col">
+                            <span class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]"><span class="text-[#f59e0b]">${o.quantity}x</span> ${o.name}</span>
+                            <span class="font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5">${formatCurrency(o.price)} un</span>
+                        </div>
+                        <span class="font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]">${formatCurrency(totalItem)}</span>
+                    </div>
+                    ${statusHtml}
                 </div>
             `;
         });
     }
-    AppState.sessionTotal = apiTotal || 0;
+    // Attach event listeners to eat buttons
+    document.querySelectorAll('.btn-eat').forEach(btn => {
+        btn.onclick = (e) => {
+            const idAttr = e.currentTarget.getAttribute('data-id');
+            if (idAttr) {
+                window.dispatchEvent(new CustomEvent('eatItem', { detail: { id: idAttr } }));
+            }
+        };
+    });
     const totalEl = document.getElementById('orders-total');
     if (totalEl)
         totalEl.innerText = formatCurrency(AppState.sessionTotal);

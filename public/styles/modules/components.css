@@ -1,0 +1,37 @@
+/* UI Components */
+.glass-panel {
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+}
+
+.hover-glow:hover { box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
+
+/* SVG Background - Thematic Dark Kitchen */
+.kitchen-bg {
+  background-color: var(--bg-base);
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,50 Q20,30 30,50 T50,50 T70,50 T90,50' stroke='rgba(245, 158, 11, 0.03)' fill='none' stroke-width='1'/%3E%3Ccircle cx='50' cy='50' r='2' fill='rgba(245, 158, 11, 0.05)'/%3E%3Cpath d='M25,25 L35,25 M25,75 L35,75' stroke='rgba(255, 255, 255, 0.02)' stroke-width='2'/%3E%3C/svg%3E");
+  background-size: 100px 100px;
+}
+
+/* Custom Progress Bar for preparing items */
+.prep-progress-bar {
+  height: 4px;
+  background: var(--bg-base);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 8px;
+  position: relative;
+}
+
+.prep-progress-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  width: 0%;
+  animation: progress-bar 3s linear forwards;
+}
+
+.status-preparing {
+  animation: pulse-subtle 1.5s infinite;
+}

@@ -28,16 +28,20 @@ class State {
         const storedTable = localStorage.getItem('current_table_id');
         this.currentTableId = storedTable ? parseInt(storedTable, 10) : null;
         this.menu = [];
-        this.orders = [];
+        this.orders = JSON.parse(localStorage.getItem('chef_orders') || '[]');
         this.lastOrderTime = 0;
-        this.sessionXP = 0;
-        this.sessionTotal = 0;
-        this.sessionItems = 0;
+        this.sessionXP = parseInt(localStorage.getItem('chef_session_xp') || '0', 10);
+        this.sessionTotal = parseFloat(localStorage.getItem('chef_session_total') || '0');
+        this.sessionItems = parseInt(localStorage.getItem('chef_session_items') || '0', 10);
         this.selectedProduct = null;
     }
     saveState() {
         localStorage.setItem('chef_xp', this.xp.toString());
         localStorage.setItem('chef_achievements', JSON.stringify(this.achievements));
+        localStorage.setItem('chef_orders', JSON.stringify(this.orders));
+        localStorage.setItem('chef_session_xp', this.sessionXP.toString());
+        localStorage.setItem('chef_session_total', this.sessionTotal.toString());
+        localStorage.setItem('chef_session_items', this.sessionItems.toString());
         if (this.currentSessionId) {
             localStorage.setItem('current_session_id', this.currentSessionId.toString());
         }

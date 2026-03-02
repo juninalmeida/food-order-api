@@ -85,8 +85,35 @@ document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) 
     
     await api.createOrder(AppState.currentSessionId, p.id, q);
 
-    AppState.orders.push({ product_id: p.id, name: p.name, price: p.price, quantity: q, total: p.price * q });
+    const clientOrderId = Math.random().toString(36).substring(7);
     
+    AppState.orders.push({ 
+        id: clientOrderId,
+        product_id: p.id, 
+        name: p.name, 
+        price: p.price, 
+        quantity: q, 
+        total: p.price * q,
+        status: 'preparing' 
+    });
+    
+    AppState.sessionTotal += p.price * q;
+    AppState.saveState();
+    
+    // Simulate Preparation Time
+    setTimeout(() => {
+        const orderIndex = AppState.orders.findIndex(o => o.id === clientOrderId);
+        if(orderIndex > -1) {
+            AppState.orders[orderIndex].status = 'ready';
+            AppState.saveState();
+            // Re-render orders if sidebar is open
+            if(!document.getElementById('screen-orders')?.classList.contains('hidden')) {
+                renderOrders();
+            }
+            showToast('Pedido Pronto!', `${q}x ${p.name} pronto para consumo.`, 'solar:bell-bing-linear');
+        }
+    }, 3000);
+
     const now = Date.now();
     let isCombo = false;
     if(now - AppState.lastOrderTime < 30000 && AppState.lastOrderTime !== 0) {
@@ -97,15 +124,14 @@ document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) 
         document.body.appendChild(ct);
         setTimeout(() => ct.remove(), 1500);
         AppState.triggerAchievement('combo_master');
+        
+        // Give combo bonus XP immediately
+        AppState.xp += 20;
+        AppState.sessionXP += 20;
+        AppState.saveState();
+        addXPVisual(20, rect.left + rect.width/2, rect.top - 20);
     }
     AppState.lastOrderTime = now;
-
-    const xpGain = (q * 10) + (isCombo ? 20 : 0);
-    AppState.xp += xpGain;
-    AppState.sessionXP += xpGain;
-    AppState.saveState();
-
-    addXPVisual(xpGain, rect.left + rect.width/2, rect.top - 20);
 
     AppState.triggerAchievement('first_dish');
     if(p.price > 80) AppState.triggerAchievement('gourmet');
@@ -115,9 +141,34 @@ document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) 
     if(uniqueIds.size >= 3) AppState.triggerAchievement('explorer');
 
     updateCartBadge();
+});
+
+// Eat Item Logic
+window.addEventListener('eatItem', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    const id = customEvent.detail.id;
     
-    // Quick re-render of menu header for updated xp bar
-    renderScreen2();
+    const orderIndex = AppState.orders.findIndex(o => o.id === id);
+    if(orderIndex > -1 && AppState.orders[orderIndex].status === 'ready') {
+        const o = AppState.orders[orderIndex];
+        o.status = 'consumed';
+        
+        const xpGain = o.quantity * 10;
+        AppState.xp += xpGain;
+        AppState.sessionXP += xpGain;
+        AppState.saveState();
+
+        const btn = document.querySelector(`[data-id="${id}"]`);
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            addXPVisual(xpGain, rect.left + rect.width/2, rect.top - 20);
+        } else {
+            addXPVisual(xpGain);
+        }
+        
+        renderOrders();
+        renderScreen2(); // Update header XP bar
+    }
 });
 
 // Sidebar & Checkout
@@ -137,6 +188,12 @@ document.getElementById('btn-checkout')?.addEventListener('click', async (e) => 
 
     if(AppState.orders.length === 0) {
         showToast('Atenção', 'Nenhum pedido para fechar.', 'solar:danger-circle-linear');
+        return;
+    }
+    
+    const unconsumedItems = AppState.orders.filter(o => o.status !== 'consumed');
+    if(unconsumedItems.length > 0) {
+        showToast('Atenção', 'Você precisa comer todos os pedidos antes de fechar a conta.', 'solar:danger-circle-linear');
         return;
     }
 
@@ -165,6 +222,10 @@ document.getElementById('btn-checkout')?.addEventListener('click', async (e) => 
 });
 
 document.getElementById('btn-new-table')?.addEventListener('click', () => {
+    renderScreen1();
+});
+
+document.getElementById('btn-back-tables')?.addEventListener('click', () => {
     renderScreen1();
 });
 
