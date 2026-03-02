@@ -123,12 +123,17 @@ export async function renderScreen1() {
         `;
         card.onclick = async () => {
             if (isOccupied && session) {
-                AppState.currentSessionId = session.id;
-                AppState.currentTableId = t.table_number;
+                // Nova Regra: Não permitir entrar em mesa ocupada!
+                showToast('Mesa Indisponível', 'Esta mesa já está ocupada por outros clientes.', 'solar:lock-password-linear');
+                return;
             }
             else {
                 const newSession = await api.openSession(t.id);
-                AppState.currentSessionId = newSession ? newSession.id : Math.floor(Math.random() * 10000);
+                // Como o backend (create) pode não retornar o objeto inteiro da sessão (ele retorna status 201 vazio), 
+                // Precisamos buscar as sessões novamente para pegar o ID da que acabou de ser criada
+                const updatedSessions = await api.getSessions();
+                const latestSession = updatedSessions?.reverse().find(s => s.table_id === t.id && !s.closed_at);
+                AppState.currentSessionId = latestSession ? latestSession.id : Math.floor(Math.random() * 10000);
                 AppState.currentTableId = t.table_number;
             }
             AppState.saveState();
@@ -232,9 +237,14 @@ export async function renderOrders() {
             }
             else if (o.status === 'ready') {
                 statusHtml = `
-                    <button class="mt-3 w-full py-2 rounded-lg bg-[#22c55e]/20 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/30 transition-colors clickable btn-eat flex items-center justify-center gap-2" data-id="${o.id}">
-                        <iconify-icon icon="solar:confetti-linear" class="text-[1.1rem]"></iconify-icon>
-                        Comer Pedido (+${o.quantity * 10} XP)
+                    <button class="mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden" data-id="${o.id}">
+                        <!-- Mascote SVG Animado -->
+                        <svg class="mascot-eat" viewBox="0 0 100 100" width="28" height="28">
+                            <circle cx="50" cy="50" r="40" fill="#22c55e" />
+                            <circle cx="65" cy="30" r="6" fill="#1a1a1a" />
+                            <path class="mascot-mouth" d="M50,50 L100,25 A40,40 0 0,1 100,75 Z" fill="#1a1a1a" />
+                        </svg>
+                        <span class="z-10">Comer Pedido (+${o.quantity * 10} XP)</span>
                     </button>
                 `;
             }

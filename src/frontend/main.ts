@@ -57,7 +57,8 @@ function closeQtyModal() {
     AppState.selectedProduct = null;
 }
 
-document.getElementById('btn-qty-minus')?.addEventListener('click', () => {
+document.getElementById('btn-qty-minus')?.addEventListener('click', (e) => {
+    e.preventDefault();
     if(qtyVal > 1) { 
         qtyVal--; 
         const valEl = document.getElementById('modal-qty-val');
@@ -65,15 +66,20 @@ document.getElementById('btn-qty-minus')?.addEventListener('click', () => {
     }
 });
 
-document.getElementById('btn-qty-plus')?.addEventListener('click', () => {
+document.getElementById('btn-qty-plus')?.addEventListener('click', (e) => {
+    e.preventDefault();
     qtyVal++; 
     const valEl = document.getElementById('modal-qty-val');
     if(valEl) valEl.innerText = qtyVal.toString(); 
 });
 
-document.getElementById('btn-qty-cancel')?.addEventListener('click', closeQtyModal);
+document.getElementById('btn-qty-cancel')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeQtyModal();
+});
 
 document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) => {
+    e.preventDefault();
     const p = AppState.selectedProduct;
     if(!p || !AppState.currentSessionId) return;
 
@@ -212,9 +218,13 @@ document.getElementById('btn-checkout')?.addEventListener('click', async (e) => 
     
     renderSummary();
     
+    // Completely clear local session data to guarantee fresh restart
     AppState.currentSessionId = null;
     AppState.currentTableId = null;
     AppState.orders = [];
+    AppState.sessionTotal = 0;
+    AppState.sessionItems = 0;
+    AppState.sessionXP = 0;
     AppState.saveState();
     
     btn.disabled = false;

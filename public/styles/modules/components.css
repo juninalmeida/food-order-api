@@ -35,3 +35,25 @@
 .status-preparing {
   animation: pulse-subtle 1.5s infinite;
 }
+
+/* Mascot Eat Animation */
+@keyframes chomp {
+  0% { d: path("M50,50 L100,25 A40,40 0 0,1 100,75 Z"); }
+  50% { d: path("M50,50 L95,48 A40,40 0 0,1 95,52 Z"); }
+  100% { d: path("M50,50 L100,25 A40,40 0 0,1 100,75 Z"); }
+}
+
+@keyframes mascot-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.mascot-eat {
+  animation: mascot-bounce 1s ease-in-out infinite;
+  display: inline-block;
+}
+
+.mascot-mouth {
+  animation: chomp 0.4s infinite;
+}
+
