@@ -7,15 +7,17 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             headers: { 'Content-Type': 'application/json' },
+            // @ts-ignore
+            cache: 'no-store',
             ...options
         });
 
-        
-        if(!res.ok) {
+
+        if (!res.ok) {
             console.error(`API Error on ${endpoint}: ${res.status} ${res.statusText}`);
             return null;
         }
-        
+
         // Some endpoints like POST, PATCH might return empty bodies
         const text = await res.text();
         return text ? JSON.parse(text) : null;
@@ -27,20 +29,20 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
 
 export const api = {
     getTables: () => fetchAPI<Table[]>('/tables'),
-    
+
     getSessions: () => fetchAPI<TableSession[]>('/tables-sessions'),
-    
+
     openSession: (tableId: number) => fetchAPI<any>('/tables-sessions', {
         method: 'POST',
         body: JSON.stringify({ table_id: tableId })
     }),
-    
+
     closeSession: (sessionId: number) => fetchAPI<any>(`/tables-sessions/${sessionId}`, {
         method: 'PATCH'
     }),
-    
+
     getProducts: () => fetchAPI<Product[]>('/products'),
-    
+
     createOrder: (sessionId: number, productId: number, quantity: number) => fetchAPI<any>('/orders', {
         method: 'POST',
         body: JSON.stringify({
@@ -49,8 +51,8 @@ export const api = {
             quantity: quantity
         })
     }),
-    
+
     getOrders: (sessionId: number) => fetchAPI<OrderItem[]>(`/orders/table-session/${sessionId}`),
-    
+
     getOrdersTotal: (sessionId: number) => fetchAPI<{ total: number, quantity: number }>(`/orders/table-session/${sessionId}/total`)
 };

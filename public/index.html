@@ -109,8 +109,10 @@
             <div class="w-full md:w-[28rem] h-full bg-[#0d0d0d]/95 backdrop-blur-md border-l border-[#2a2a2a] flex flex-col shadow-2xl safe-pt safe-pb transform transition-transform duration-300 translate-x-0">
                 <header class="p-[clamp(1rem,3vw,1.5rem)] border-b border-[#2a2a2a] flex items-center justify-between">
                     <h2 class="font-['Cinzel'] tracking-tight font-medium text-fluid-sec text-[#f5f5f5]">Seus Pedidos</h2>
-                    <button id="btn-close-orders" class="w-10 h-10 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] transition-colors clickable">
-                        <iconify-icon icon="solar:close-linear" stroke-width="1.5" class="text-[1.25rem]"></iconify-icon>
+                    <button id="btn-close-orders" class="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-[#9ca3af] hover:text-[#ef4444] hover:border-[#ef4444]/50 transition-all clickable shadow-sm group">
+                        <svg viewBox="0 0 24 24" class="w-6 h-6 transform group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                     </button>
                 </header>
 
@@ -172,9 +174,9 @@
                 <p id="modal-qty-price" class="font-['JetBrains_Mono'] text-fluid-price text-[#f59e0b] mb-6">R$ 0,00</p>
                 
                 <div class="flex items-center justify-between bg-[#0d0d0d] border border-[#2a2a2a] rounded-xl p-2 mb-6">
-                    <button id="btn-qty-minus" class="w-12 h-12 flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] clickable"><iconify-icon icon="solar:minus-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon></button>
-                    <span id="modal-qty-val" class="font-['JetBrains_Mono'] font-medium text-fluid-h text-[#f5f5f5]">1</span>
-                    <button id="btn-qty-plus" class="w-12 h-12 flex items-center justify-center text-[#9ca3af] hover:text-[#f5f5f5] clickable"><iconify-icon icon="solar:add-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon></button>
+                    <button id="btn-qty-minus" class="w-12 h-12 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] flex items-center justify-center text-[#f5f5f5] hover:bg-[#3a3a3a] transition-colors clickable shadow-sm"><iconify-icon icon="solar:minus-bold" class="text-[1.5rem]"></iconify-icon></button>
+                    <span id="modal-qty-val" class="font-['JetBrains_Mono'] font-medium text-fluid-h text-[#f5f5f5] w-12 text-center">1</span>
+                    <button id="btn-qty-plus" class="w-12 h-12 rounded-lg bg-[#f59e0b] border border-[#f59e0b]/50 flex items-center justify-center text-[#111111] hover:bg-[#fbbf24] transition-colors clickable shadow-sm"><iconify-icon icon="solar:add-bold" class="text-[1.5rem]"></iconify-icon></button>
                 </div>
 
                 <div class="flex gap-3">

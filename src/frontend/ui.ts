@@ -23,13 +23,13 @@ export function showToast(title: string, desc: string, iconName: string) {
         </div>
     `;
     container.appendChild(toast);
-    setTimeout(() => { 
-        if(container.contains(toast)) toast.remove(); 
+    setTimeout(() => {
+        if (container.contains(toast)) toast.remove();
     }, 4000);
 }
 
 export function addXPVisual(amount: number, x?: number, y?: number) {
-    if(x && y) {
+    if (x && y) {
         const fl = document.createElement('span');
         fl.className = 'floating-xp font-["JetBrains_Mono"] font-medium text-fluid-body text-[#f59e0b]';
         fl.style.left = `${x}px`;
@@ -40,40 +40,40 @@ export function addXPVisual(amount: number, x?: number, y?: number) {
     }
 
     const bar = document.getElementById('xp-bar-fill');
-    if(bar && bar.parentElement) {
+    if (bar && bar.parentElement) {
         bar.parentElement.classList.add('animate-xp');
         setTimeout(() => bar.parentElement!.classList.remove('animate-xp'), 1000);
     }
 
     document.querySelectorAll('.utensil').forEach(u => {
         u.classList.remove('utensil-react-xp');
-        void (u as HTMLElement).offsetWidth; 
+        void (u as HTMLElement).offsetWidth;
         u.classList.add('utensil-react-xp');
     });
 }
 
 function updateHeader() {
-    if(!AppState.currentTableId) return;
-    
+    if (!AppState.currentTableId) return;
+
     const tableDisplay = document.getElementById('current-table-display');
-    if(tableDisplay) {
+    if (tableDisplay) {
         tableDisplay.innerText = AppState.currentTableId.toString().padStart(2, '0');
     }
-    
+
     const lvl = AppState.getLevelInfo();
     const nameEl = document.getElementById('player-level-name');
-    if(nameEl) {
+    if (nameEl) {
         nameEl.innerText = lvl.name;
         nameEl.className = `font-['Cinzel'] tracking-tight font-medium text-fluid-lvl ${lvl.color}`;
     }
-    
+
     const badgeEl = document.getElementById('player-badge');
-    if(badgeEl) {
+    if (badgeEl) {
         badgeEl.setAttribute('icon', lvl.badge);
     }
-    
+
     const fillEl = document.getElementById('xp-bar-fill');
-    if(fillEl) {
+    if (fillEl) {
         const progress = lvl.max > 1000 ? 100 : Math.max(0, Math.min(100, ((AppState.xp - lvl.min) / (lvl.max - lvl.min)) * 100));
         fillEl.style.width = `${progress}%`;
     }
@@ -81,10 +81,10 @@ function updateHeader() {
 
 export function updateCartBadge() {
     const badge = document.getElementById('cart-badge');
-    if(!badge) return;
+    if (!badge) return;
 
     const totalItems = AppState.orders.reduce((sum, o) => sum + o.quantity, 0);
-    if(totalItems > 0) {
+    if (totalItems > 0) {
         badge.innerText = totalItems.toString();
         badge.classList.remove('hidden');
         badge.classList.add('animate-pulse');
@@ -98,25 +98,25 @@ export function updateCartBadge() {
 export function showScreen(id: string) {
     ['screen-tables', 'screen-menu', 'screen-summary'].forEach(s => {
         const el = document.getElementById(s);
-        if(el) el.classList.add('hidden');
+        if (el) el.classList.add('hidden');
     });
     const active = document.getElementById(id);
-    if(active) active.classList.remove('hidden');
+    if (active) active.classList.remove('hidden');
     window.scrollTo(0, 0);
 }
 
 export async function renderScreen1() {
     showScreen('screen-tables');
     const grid = document.getElementById('tables-grid');
-    if(!grid) return;
+    if (!grid) return;
 
     grid.innerHTML = '<div class="col-span-full text-center text-[#9ca3af] py-10">Carregando salão...</div>';
 
     let tables = await api.getTables();
     let sessions = await api.getSessions();
 
-    if(!tables) tables = Array.from({length: 5}, (_, i) => ({ id: i+1, table_number: i+1 }));
-    if(!sessions) sessions = [];
+    if (!tables) tables = Array.from({ length: 5 }, (_, i) => ({ id: i + 1, table_number: i + 1 }));
+    if (!sessions) sessions = [];
 
     const activeSessions = sessions.filter(s => !s.closed_at);
 
@@ -124,10 +124,10 @@ export async function renderScreen1() {
     tables.forEach(t => {
         const session = activeSessions.find(s => s.table_id === t.id);
         const isOccupied = !!session;
-        
+
         const card = document.createElement('div');
         card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
-        
+
         let iconHtml = isOccupied ? `<iconify-icon icon="solar:fire-bold" class="text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4"></iconify-icon>` : '';
 
         card.innerHTML = `
@@ -137,7 +137,7 @@ export async function renderScreen1() {
         `;
 
         card.onclick = async () => {
-            if(isOccupied && session) {
+            if (isOccupied && session) {
                 // Nova Regra: Não permitir entrar em mesa ocupada!
                 showToast('Mesa Indisponível', 'Esta mesa já está ocupada por outros clientes.', 'solar:lock-password-linear');
                 return;
@@ -147,7 +147,7 @@ export async function renderScreen1() {
                 // Precisamos buscar as sessões novamente para pegar o ID da que acabou de ser criada
                 const updatedSessions = await api.getSessions();
                 const latestSession = updatedSessions?.reverse().find(s => s.table_id === t.id && !s.closed_at);
-                
+
                 AppState.currentSessionId = latestSession ? latestSession.id : Math.floor(Math.random() * 10000);
                 AppState.currentTableId = t.table_number;
             }
@@ -166,14 +166,14 @@ export async function renderScreen2() {
     showScreen('screen-menu');
     updateHeader();
     updateCartBadge();
-    
-    const grid = document.getElementById('menu-grid');
-    if(!grid) return;
 
-    if(AppState.menu.length === 0) {
+    const grid = document.getElementById('menu-grid');
+    if (!grid) return;
+
+    if (AppState.menu.length === 0) {
         grid.innerHTML = Array(6).fill(0).map(() => `<div class="h-32 bg-[#1a1a1a]/80 rounded-xl border border-[#2a2a2a] animate-pulse"></div>`).join('');
         let prods = await api.getProducts();
-        if(prods) {
+        if (prods) {
             AppState.menu = prods;
         } else {
             AppState.menu = [
@@ -188,15 +188,46 @@ export async function renderScreen2() {
     AppState.menu.forEach(p => {
         const isDrink = p.name.toLowerCase().includes('refrigerante') || p.name.toLowerCase().includes('suco');
         const isPremium = p.price > 80;
-        let icon = 'solar:plate-linear';
-        if(isDrink) icon = 'solar:cup-linear';
-        else if (isPremium) icon = 'solar:chef-hat-linear';
+
+        let customSvg = '';
+        if (isDrink) {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 12L10 28H22L24 12" fill="currentColor" fill-opacity="0.15" />
+                <path d="M14 12L18 3H21" stroke-width="2.5" />
+                <path d="M9.5 16H22.5" stroke-dasharray="2 3" />
+                <path d="M24 12C24 12 18 14 16 14C14 14 8 12 8 12" />
+                <circle cx="23" cy="11" r="4" fill="currentColor" fill-opacity="0.2" />
+                <path d="M23 7V15M19 11H27" stroke-width="1.5" />
+            </svg>`;
+        } else if (isPremium) {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 22H28" stroke-width="2.5" />
+                <path d="M6 22C6 13 10 8 16 8C22 8 26 13 26 22" fill="currentColor" fill-opacity="0.15" />
+                <circle cx="16" cy="6" r="2" fill="currentColor" />
+                <path d="M24 6L25 3L28 4" stroke-width="1.5" />
+                <path d="M6 8L5 5L2 6" stroke-width="1.5" />
+                <path d="M3 25C3 25 8 27 16 27C24 27 29 25 29 25" />
+            </svg>`;
+        } else {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 14C6 8 11 4 16 4C21 4 26 8 26 14H6Z" fill="currentColor" fill-opacity="0.2" />
+                <path d="M5 15C6 17 8 14 10 16C12 18 14 14 16 16C18 18 20 14 22 16C24 18 26 17 27 15" stroke-width="2.5" />
+                <rect x="6" y="18" width="20" height="3" rx="1.5" fill="currentColor" fill-opacity="0.4" stroke="none" />
+                <path d="M7 23H25C25 25 22 28 16 28C10 28 7 25 7 23Z" fill="currentColor" fill-opacity="0.1" />
+                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
+                <circle cx="16" cy="6" r="1" fill="currentColor" stroke="none" />
+                <circle cx="20" cy="9" r="1" fill="currentColor" stroke="none" />
+            </svg>`;
+        }
 
         const card = document.createElement('div');
         card.className = 'bg-[#1a1a1a]/80 backdrop-blur-md border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-4 hover-glow transition-all group';
         card.innerHTML = `
-            <div class="w-12 h-12 rounded-full bg-[#0d0d0d] border border-[#2a2a2a] flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 transition-colors">
-                <iconify-icon icon="${icon}" stroke-width="1.5" class="text-[1.5rem] text-[#9ca3af] group-hover:text-[#f59e0b] transition-colors"></iconify-icon>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all">
+                ${customSvg}
             </div>
             <div class="flex-grow min-w-0">
                 <h3 class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate">${p.name}</h3>
@@ -212,7 +243,7 @@ export async function renderScreen2() {
     document.querySelectorAll('.btn-add').forEach(btn => {
         (btn as HTMLElement).onclick = (e) => {
             const idAttr = (e.currentTarget as HTMLElement).getAttribute('data-id');
-            if(idAttr) {
+            if (idAttr) {
                 // We dispatch a custom event to handled in main.ts
                 window.dispatchEvent(new CustomEvent('openQtyModal', { detail: { id: parseInt(idAttr, 10) } }));
             }
@@ -221,32 +252,32 @@ export async function renderScreen2() {
 }
 
 export async function renderOrders() {
-    if(!AppState.currentSessionId) return;
-    
+    if (!AppState.currentSessionId) return;
+
     const scr = document.getElementById('screen-orders');
-    if(!scr) return;
-    
+    if (!scr) return;
+
     scr.classList.remove('hidden');
     const panel = scr.firstElementChild as HTMLElement;
-    if(panel) {
+    if (panel) {
         panel.classList.remove('translate-x-full');
         panel.classList.add('translate-x-0');
     }
 
     const list = document.getElementById('orders-list');
-    if(!list) return;
+    if (!list) return;
 
     // Removemos o sync total com a API aqui pois o status real (preparando/comido) agora é mantido localmente
     // Para simplificar a demonstração, usaremos apenas a AppState.orders.
     const orders = AppState.orders;
 
     list.innerHTML = '';
-    if(orders.length === 0) {
+    if (orders.length === 0) {
         list.innerHTML = '<div class="text-center text-[#9ca3af] py-10">Nenhum pedido realizado.</div>';
     } else {
         orders.forEach(o => {
             const totalItem = o.total || (o.price * o.quantity);
-            
+
             let statusHtml = '';
             if (o.status === 'preparing') {
                 statusHtml = `
@@ -294,37 +325,37 @@ export async function renderOrders() {
     document.querySelectorAll('.btn-eat').forEach(btn => {
         (btn as HTMLElement).onclick = (e) => {
             const idAttr = (e.currentTarget as HTMLElement).getAttribute('data-id');
-            if(idAttr) {
+            if (idAttr) {
                 window.dispatchEvent(new CustomEvent('eatItem', { detail: { id: idAttr } }));
             }
         };
     });
 
     const totalEl = document.getElementById('orders-total');
-    if(totalEl) totalEl.innerText = formatCurrency(AppState.sessionTotal);
+    if (totalEl) totalEl.innerText = formatCurrency(AppState.sessionTotal);
 }
 
 export function renderSummary() {
     showScreen('screen-summary');
-    
+
     const elTotal = document.getElementById('summary-total');
-    if(elTotal) elTotal.innerText = formatCurrency(AppState.sessionTotal);
-    
+    if (elTotal) elTotal.innerText = formatCurrency(AppState.sessionTotal);
+
     const elXP = document.getElementById('summary-xp');
-    if(elXP) elXP.innerText = `+${AppState.sessionXP} XP`;
+    if (elXP) elXP.innerText = `+${AppState.sessionXP} XP`;
 
     const achList = document.getElementById('summary-achievements');
-    if(!achList) return;
-    
+    if (!achList) return;
+
     achList.innerHTML = '';
     const toShow = AppState.achievements.slice(-4).reverse();
-    
-    if(toShow.length === 0) {
+
+    if (toShow.length === 0) {
         achList.innerHTML = '<div class="col-span-full text-[#9ca3af] text-fluid-xs text-center py-4">Nenhuma conquista nova.</div>';
     } else {
         toShow.forEach(id => {
             const a = ACHIEVEMENTS_DEF[id];
-            if(!a) return;
+            if (!a) return;
             achList.innerHTML += `
                 <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3 min-w-[200px] snap-center shrink-0">
                     <div class="w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0">
@@ -344,13 +375,13 @@ export function openModalUI(product: Product, qty: number = 1) {
     const nameEl = document.getElementById('modal-qty-name');
     const priceEl = document.getElementById('modal-qty-price');
     const valEl = document.getElementById('modal-qty-val');
-    
-    if(nameEl) nameEl.innerText = product.name;
-    if(priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
-    if(valEl) valEl.innerText = qty.toString();
-    
+
+    if (nameEl) nameEl.innerText = product.name;
+    if (priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
+    if (valEl) valEl.innerText = qty.toString();
+
     const m = document.getElementById('modal-qty');
-    if(m) {
+    if (m) {
         m.classList.remove('hidden');
         setTimeout(() => m.firstElementChild?.classList.remove('translate-y-full'), 10);
     }
@@ -358,7 +389,7 @@ export function openModalUI(product: Product, qty: number = 1) {
 
 export function closeModalUI() {
     const m = document.getElementById('modal-qty');
-    if(m) {
+    if (m) {
         m.firstElementChild?.classList.add('translate-y-full');
         setTimeout(() => m.classList.add('hidden'), 300);
     }
@@ -366,8 +397,8 @@ export function closeModalUI() {
 
 export function updateModalQtyDisplay(product: Product, qty: number) {
     const valEl = document.getElementById('modal-qty-val');
-    if(valEl) valEl.innerText = qty.toString(); 
+    if (valEl) valEl.innerText = qty.toString();
 
     const priceEl = document.getElementById('modal-qty-price');
-    if(priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
+    if (priceEl) priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
 }
