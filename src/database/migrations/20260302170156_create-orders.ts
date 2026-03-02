@@ -4,7 +4,7 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable("orders", (table) => {
     table.increments("id").primary();
     table
-      .integer("user_id")
+      .integer("table_session_id")
       .notNullable()
       .references("id")
       .inTable("tables_sessions");
@@ -21,5 +21,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  knex.schema.dropTable("orders");
+  await knex.schema.dropTable("orders");
 }
