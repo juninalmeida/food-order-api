@@ -35,6 +35,31 @@ function toDishSlug(name: string): string {
     return slug || "dish";
 }
 
+function createAchievementCard(name: string, description: string, iconName: string): HTMLElement {
+    const card = document.createElement('div');
+    card.className = 'bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3 min-w-[200px] snap-center shrink-0';
+
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0';
+    iconWrapper.appendChild(createIcon(iconName, 'text-[1.5rem] text-[#f59e0b]'));
+
+    const content = document.createElement('div');
+    content.className = 'flex flex-col text-left';
+
+    const title = document.createElement('span');
+    title.className = "font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]";
+    title.textContent = name;
+
+    const descriptionEl = document.createElement('span');
+    descriptionEl.className = 'text-fluid-xs text-[#9ca3af] truncate';
+    descriptionEl.textContent = description;
+
+    content.append(title, descriptionEl);
+    card.append(iconWrapper, content);
+
+    return card;
+}
+
 export function showToast(title: string, desc: string, iconName: string) {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -422,23 +447,21 @@ export function renderSummary() {
     const toShow = AppState.achievements.slice(-4).reverse();
 
     if (toShow.length === 0) {
-        achList.innerHTML = '<div class="col-span-full text-[#9ca3af] text-fluid-xs text-center py-4">Nenhuma conquista nova.</div>';
+        const empty = document.createElement('div');
+        empty.className = 'col-span-full text-[#9ca3af] text-fluid-xs text-center py-4';
+        empty.textContent = 'Nenhuma conquista nova.';
+        achList.appendChild(empty);
     } else {
+        const fragment = document.createDocumentFragment();
+
         toShow.forEach(id => {
             const a = ACHIEVEMENTS_DEF[id];
             if (!a) return;
-            achList.innerHTML += `
-                <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex items-center gap-3 min-w-[200px] snap-center shrink-0">
-                    <div class="w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0">
-                        <iconify-icon icon="${a.icon}" stroke-width="1.5" class="text-[1.5rem] text-[#f59e0b]"></iconify-icon>
-                    </div>
-                    <div class="flex flex-col text-left">
-                        <span class="font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]">${a.name}</span>
-                        <span class="text-fluid-xs text-[#9ca3af] truncate">${a.desc}</span>
-                    </div>
-                </div>
-            `;
+
+            fragment.appendChild(createAchievementCard(a.name, a.desc, a.icon));
         });
+
+        achList.appendChild(fragment);
     }
 }
 
