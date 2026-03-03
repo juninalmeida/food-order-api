@@ -1,4 +1,4 @@
-import { knex } from "@/database/knex";
+import { knex } from "../database/knex";
 
 export interface TableRecord {
   id: number;

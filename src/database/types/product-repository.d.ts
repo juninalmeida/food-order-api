@@ -1,4 +1,4 @@
-import { productsRoutes } from "@/routes/products-routes";
+import { productsRoutes } from "../../routes/products-routes";
 
 type ProductRepository = {
   id: number;

@@ -1,5 +1,5 @@
-import { TablesSessionsRepository } from "@/repositories/tables-sessions-repository";
-import { AppError } from "@/utils/app-error";
+import { TablesSessionsRepository } from "../repositories/tables-sessions-repository";
+import { AppError } from "../utils/app-error";
 
 class TablesSessionsService {
   constructor(

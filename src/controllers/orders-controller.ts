@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { OrdersRepository } from "@/repositories/orders-repository";
-import { ProductsRepository } from "@/repositories/products-repository";
-import { TablesSessionsRepository } from "@/repositories/tables-sessions-repository";
-import { OrdersService } from "@/services/orders-service";
+import { OrdersRepository } from "../repositories/orders-repository";
+import { ProductsRepository } from "../repositories/products-repository";
+import { TablesSessionsRepository } from "../repositories/tables-sessions-repository";
+import { OrdersService } from "../services/orders-service";
 
 class OrdersController {
   private readonly ordersService: OrdersService;

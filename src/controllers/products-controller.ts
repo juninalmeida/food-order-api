@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import { ProductsRepository } from "@/repositories/products-repository";
-import { ProductsService } from "@/services/products-service";
+import { ProductsRepository } from "../repositories/products-repository";
+import { ProductsService } from "../services/products-service";
 
 class ProductsController {
   private readonly productsService: ProductsService;

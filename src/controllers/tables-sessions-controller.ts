@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-import { TablesSessionsRepository } from "@/repositories/tables-sessions-repository";
-import { TablesSessionsService } from "@/services/tables-sessions-service";
+import { TablesSessionsRepository } from "../repositories/tables-sessions-repository";
+import { TablesSessionsService } from "../services/tables-sessions-service";
 
 class TablesSessionsController {
   private readonly tablesSessionsService: TablesSessionsService;

@@ -1,4 +1,4 @@
-import { TablesRepository } from "@/repositories/tables-repository";
+import { TablesRepository } from "../repositories/tables-repository";
 
 class TablesService {
   constructor(private readonly tablesRepository: TablesRepository) {}

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { TablesRepository } from "@/repositories/tables-repository";
-import { TablesService } from "@/services/tables-service";
+import { TablesRepository } from "../repositories/tables-repository";
+import { TablesService } from "../services/tables-service";
 
 class TablesController {
   private readonly tablesService: TablesService;

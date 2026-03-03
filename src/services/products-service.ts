@@ -1,5 +1,5 @@
-import { ProductsRepository } from "@/repositories/products-repository";
-import { AppError } from "@/utils/app-error";
+import { ProductsRepository } from "../repositories/products-repository";
+import { AppError } from "../utils/app-error";
 
 interface UpdateProductInput {
   name: string;

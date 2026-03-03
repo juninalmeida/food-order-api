@@ -1,7 +1,7 @@
-import { OrdersRepository } from "@/repositories/orders-repository";
-import { ProductsRepository } from "@/repositories/products-repository";
-import { TablesSessionsRepository } from "@/repositories/tables-sessions-repository";
-import { AppError } from "@/utils/app-error";
+import { OrdersRepository } from "../repositories/orders-repository";
+import { ProductsRepository } from "../repositories/products-repository";
+import { TablesSessionsRepository } from "../repositories/tables-sessions-repository";
+import { AppError } from "../utils/app-error";
 
 interface CreateOrderInput {
   table_session_id: number;
