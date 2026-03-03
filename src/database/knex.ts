@@ -1,5 +1,7 @@
 import { knex as knexConfig } from "knex";
 
-import config from "../../knexfile";
+import { getDatabaseConfig } from "./config";
 
-export const knex = knexConfig(config);
+const useSourceFiles = __filename.endsWith(".ts");
+
+export const knex = knexConfig(getDatabaseConfig(useSourceFiles));
