@@ -1,3 +1,4 @@
+import "./iconify-local.js";
 import { AppState } from "./state.js";
 import { api } from "./api.js";
 import {

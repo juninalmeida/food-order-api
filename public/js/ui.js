@@ -4,21 +4,46 @@ import { api } from "./api.js";
 function formatCurrency(val) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 }
+const FALLBACK_DISH_ICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%239ca3af' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/></svg>";
+const SAFE_ICON_PATTERN = /^[a-z0-9:-]+$/i;
+function createIcon(iconName, className, strokeWidth = "1.5") {
+    const icon = document.createElement('iconify-icon');
+    icon.setAttribute('icon', SAFE_ICON_PATTERN.test(iconName) ? iconName : 'solar:danger-circle-linear');
+    icon.setAttribute('stroke-width', strokeWidth);
+    icon.className = className;
+    return icon;
+}
+function toDishSlug(name) {
+    const slug = name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    return slug || "dish";
+}
 export function showToast(title, desc, iconName) {
     const container = document.getElementById('toast-container');
     if (!container)
         return;
     const toast = document.createElement('div');
     toast.className = 'glass-panel border-[#f59e0b]/50 rounded-xl p-4 flex items-start gap-3 shadow-lg toast-enter';
-    toast.innerHTML = `
-        <div class="w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0">
-            <iconify-icon icon="${iconName}" stroke-width="1.5" class="text-[1.5rem] text-[#f59e0b]"></iconify-icon>
-        </div>
-        <div class="flex flex-col">
-            <span class="font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]">${title}</span>
-            <span class="text-fluid-xs text-[#9ca3af] mt-0.5">${desc}</span>
-        </div>
-    `;
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0';
+    iconWrapper.appendChild(createIcon(iconName, 'text-[1.5rem] text-[#f59e0b]'));
+    const content = document.createElement('div');
+    content.className = 'flex flex-col';
+    const titleEl = document.createElement('span');
+    titleEl.className = "font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]";
+    titleEl.textContent = title;
+    const descEl = document.createElement('span');
+    descEl.className = 'text-fluid-xs text-[#9ca3af] mt-0.5';
+    descEl.textContent = desc;
+    content.append(titleEl, descEl);
+    toast.append(iconWrapper, content);
     container.appendChild(toast);
     setTimeout(() => {
         if (container.contains(toast))
@@ -104,10 +129,10 @@ export async function renderScreen1() {
     grid.innerHTML = '<div class="col-span-full text-center text-[#9ca3af] py-10">Carregando salão...</div>';
     let tables = await api.getTables();
     let sessions = await api.getSessions();
-    if (!tables)
-        tables = Array.from({ length: 5 }, (_, i) => ({ id: i + 1, table_number: i + 1 }));
-    if (!sessions)
-        sessions = [];
+    if (!tables || !sessions) {
+        grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar as mesas agora.</div>';
+        return;
+    }
     const activeSessions = sessions.filter(s => !s.closed_at);
     grid.innerHTML = '';
     tables.forEach(t => {
@@ -115,12 +140,16 @@ export async function renderScreen1() {
         const isOccupied = !!session;
         const card = document.createElement('div');
         card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
-        let iconHtml = isOccupied ? `<iconify-icon icon="solar:fire-bold" class="text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4"></iconify-icon>` : '';
-        card.innerHTML = `
-            ${iconHtml}
-            <span class="font-['Cinzel'] tracking-tight font-medium text-[clamp(2rem,8vw,4rem)] text-[#f5f5f5] leading-none mb-2">${t.table_number.toString().padStart(2, '0')}</span>
-            <span class="text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#f59e0b]'}">${isOccupied ? 'Ocupada' : 'Livre'}</span>
-        `;
+        if (isOccupied) {
+            card.appendChild(createIcon('solar:fire-bold', 'text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4', '1.5'));
+        }
+        const tableNumber = document.createElement('span');
+        tableNumber.className = "font-['Cinzel'] tracking-tight font-medium text-[clamp(2rem,8vw,4rem)] text-[#f5f5f5] leading-none mb-2";
+        tableNumber.textContent = t.table_number.toString().padStart(2, '0');
+        const availability = document.createElement('span');
+        availability.className = `text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#f59e0b]'}`;
+        availability.textContent = isOccupied ? 'Ocupada' : 'Livre';
+        card.append(tableNumber, availability);
         card.onclick = async () => {
             if (isOccupied && session) {
                 // Nova Regra: Não permitir entrar em mesa ocupada!
@@ -128,12 +157,26 @@ export async function renderScreen1() {
                 return;
             }
             else {
-                const newSession = await api.openSession(t.id);
+                const openSessionResult = await api.openSession(t.id);
+                if (openSessionResult === null) {
+                    showToast('Erro na sessão', 'Não foi possível abrir a mesa agora.', 'solar:danger-circle-linear');
+                    return;
+                }
                 // Como o backend (create) pode não retornar o objeto inteiro da sessão (ele retorna status 201 vazio), 
                 // Precisamos buscar as sessões novamente para pegar o ID da que acabou de ser criada
                 const updatedSessions = await api.getSessions();
-                const latestSession = updatedSessions?.reverse().find(s => s.table_id === t.id && !s.closed_at);
-                AppState.currentSessionId = latestSession ? latestSession.id : Math.floor(Math.random() * 10000);
+                if (!updatedSessions) {
+                    showToast('Erro de sincronização', 'A sessão abriu, mas a interface não conseguiu sincronizar.', 'solar:danger-circle-linear');
+                    return;
+                }
+                const latestSession = [...updatedSessions]
+                    .reverse()
+                    .find(s => s.table_id === t.id && !s.closed_at);
+                if (!latestSession) {
+                    showToast('Erro de sincronização', 'A sessão abriu, mas não foi encontrada para esta mesa.', 'solar:danger-circle-linear');
+                    return;
+                }
+                AppState.currentSessionId = latestSession.id;
                 AppState.currentTableId = t.table_number;
             }
             AppState.saveState();
@@ -154,71 +197,41 @@ export async function renderScreen2() {
         return;
     if (AppState.menu.length === 0) {
         grid.innerHTML = Array(6).fill(0).map(() => `<div class="h-32 bg-[#1a1a1a]/80 rounded-xl border border-[#2a2a2a] animate-pulse"></div>`).join('');
-        let prods = await api.getProducts();
-        if (prods) {
-            AppState.menu = prods;
+        const prods = await api.getProducts();
+        if (!prods) {
+            grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar o cardápio agora.</div>';
+            return;
         }
-        else {
-            AppState.menu = [
-                { id: 1, name: 'Baião de Dois Arretado', price: 32.90 },
-                { id: 2, name: 'Cuscuz Cabra da Peste', price: 54.50 },
-                { id: 3, name: 'Carne de Sol do Lampião', price: 55.90 }
-            ];
-        }
+        AppState.menu = prods;
     }
     grid.innerHTML = '';
     AppState.menu.forEach(p => {
-        const isDrink = p.name.toLowerCase().includes('refrigerante') || p.name.toLowerCase().includes('suco');
-        const isPremium = p.price > 80;
-        let customSvg = '';
-        if (isDrink) {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 12L10 28H22L24 12" fill="currentColor" fill-opacity="0.15" />
-                <path d="M14 12L18 3H21" stroke-width="2.5" />
-                <path d="M9.5 16H22.5" stroke-dasharray="2 3" />
-                <path d="M24 12C24 12 18 14 16 14C14 14 8 12 8 12" />
-                <circle cx="23" cy="11" r="4" fill="currentColor" fill-opacity="0.2" />
-                <path d="M23 7V15M19 11H27" stroke-width="1.5" />
-            </svg>`;
-        }
-        else if (isPremium) {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 22H28" stroke-width="2.5" />
-                <path d="M6 22C6 13 10 8 16 8C22 8 26 13 26 22" fill="currentColor" fill-opacity="0.15" />
-                <circle cx="16" cy="6" r="2" fill="currentColor" />
-                <path d="M24 6L25 3L28 4" stroke-width="1.5" />
-                <path d="M6 8L5 5L2 6" stroke-width="1.5" />
-                <path d="M3 25C3 25 8 27 16 27C24 27 29 25 29 25" />
-            </svg>`;
-        }
-        else {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 14C6 8 11 4 16 4C21 4 26 8 26 14H6Z" fill="currentColor" fill-opacity="0.2" />
-                <path d="M5 15C6 17 8 14 10 16C12 18 14 14 16 16C18 18 20 14 22 16C24 18 26 17 27 15" stroke-width="2.5" />
-                <rect x="6" y="18" width="20" height="3" rx="1.5" fill="currentColor" fill-opacity="0.4" stroke="none" />
-                <path d="M7 23H25C25 25 22 28 16 28C10 28 7 25 7 23Z" fill="currentColor" fill-opacity="0.1" />
-                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
-                <circle cx="16" cy="6" r="1" fill="currentColor" stroke="none" />
-                <circle cx="20" cy="9" r="1" fill="currentColor" stroke="none" />
-            </svg>`;
-        }
         const card = document.createElement('div');
         card.className = 'bg-[#1a1a1a]/80 backdrop-blur-md border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-4 hover-glow transition-all group';
-        card.innerHTML = `
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all">
-                ${customSvg}
-            </div>
-            <div class="flex-grow min-w-0">
-                <h3 class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate">${p.name}</h3>
-                <p class="font-['JetBrains_Mono'] text-fluid-price text-[#9ca3af] mt-1">${formatCurrency(p.price)}</p>
-            </div>
-            <button class="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[#f5f5f5] hover:bg-[#f5f5f5] hover:text-[#0d0d0d] transition-colors shrink-0 clickable btn-add" data-id="${p.id}">
-                <iconify-icon icon="solar:add-linear" stroke-width="1.5" class="text-[1.25rem]"></iconify-icon>
-            </button>
-        `;
+        const iconBox = document.createElement('div');
+        iconBox.className = 'w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all';
+        const dishImage = document.createElement('img');
+        dishImage.className = 'w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300';
+        dishImage.src = `/assets/dishes/${toDishSlug(p.name)}.svg`;
+        dishImage.alt = p.name;
+        dishImage.addEventListener('error', () => {
+            dishImage.src = FALLBACK_DISH_ICON;
+        }, { once: true });
+        iconBox.appendChild(dishImage);
+        const content = document.createElement('div');
+        content.className = 'flex-grow min-w-0';
+        const title = document.createElement('h3');
+        title.className = "font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate";
+        title.textContent = p.name;
+        const price = document.createElement('p');
+        price.className = "font-['JetBrains_Mono'] text-fluid-price text-[#9ca3af] mt-1";
+        price.textContent = formatCurrency(p.price);
+        content.append(title, price);
+        const addBtn = document.createElement('button');
+        addBtn.className = 'w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[#f5f5f5] hover:bg-[#f5f5f5] hover:text-[#0d0d0d] transition-colors shrink-0 clickable btn-add';
+        addBtn.setAttribute('data-id', String(p.id));
+        addBtn.appendChild(createIcon('solar:add-linear', 'text-[1.25rem]'));
+        card.append(iconBox, content, addBtn);
         grid.appendChild(card);
     });
     document.querySelectorAll('.btn-add').forEach(btn => {
@@ -246,58 +259,108 @@ export async function renderOrders() {
     const list = document.getElementById('orders-list');
     if (!list)
         return;
-    // Removemos o sync total com a API aqui pois o status real (preparando/comido) agora é mantido localmente
-    // Para simplificar a demonstração, usaremos apenas a AppState.orders.
+    const [ordersFromApi, totalsFromApi] = await Promise.all([
+        api.getOrders(AppState.currentSessionId),
+        api.getOrdersTotal(AppState.currentSessionId)
+    ]);
+    if (ordersFromApi) {
+        const statusByOrderId = new Map(AppState.orders.map(order => [order.id, order.status]));
+        AppState.orders = ordersFromApi.map(order => {
+            const orderId = String(order.id);
+            return {
+                id: orderId,
+                product_id: order.product_id,
+                name: order.name,
+                price: Number(order.price),
+                quantity: Number(order.quantity),
+                total: Number(order.total),
+                status: statusByOrderId.get(orderId) ?? 'preparing',
+                table_session_id: order.table_session_id,
+                created_at: order.created_at,
+                updated_at: order.updated_at
+            };
+        });
+    }
+    if (totalsFromApi) {
+        AppState.sessionTotal = Number(totalsFromApi.total);
+        AppState.sessionItems = Number(totalsFromApi.quantity);
+    }
+    if (ordersFromApi || totalsFromApi) {
+        AppState.saveState();
+    }
     const orders = AppState.orders;
     list.innerHTML = '';
     if (orders.length === 0) {
-        list.innerHTML = '<div class="text-center text-[#9ca3af] py-10">Nenhum pedido realizado.</div>';
+        const empty = document.createElement('div');
+        empty.className = 'text-center text-[#9ca3af] py-10';
+        empty.textContent = 'Nenhum pedido realizado.';
+        list.appendChild(empty);
     }
     else {
+        const fragment = document.createDocumentFragment();
         orders.forEach(o => {
             const totalItem = o.total || (o.price * o.quantity);
-            let statusHtml = '';
+            const card = document.createElement('div');
+            card.className = `bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex flex-col justify-between items-start transition-all ${o.status === 'ready' ? 'border-[#22c55e]/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : ''}`;
+            const topRow = document.createElement('div');
+            topRow.className = 'flex justify-between items-start w-full';
+            const left = document.createElement('div');
+            left.className = 'flex flex-col';
+            const title = document.createElement('span');
+            title.className = "font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]";
+            const qty = document.createElement('span');
+            qty.className = 'text-[#f59e0b]';
+            qty.textContent = `${o.quantity}x`;
+            title.appendChild(qty);
+            title.append(` ${o.name}`);
+            const unitPrice = document.createElement('span');
+            unitPrice.className = "font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5";
+            unitPrice.textContent = `${formatCurrency(o.price)} un`;
+            left.append(title, unitPrice);
+            const total = document.createElement('span');
+            total.className = "font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]";
+            total.textContent = formatCurrency(totalItem);
+            topRow.append(left, total);
+            card.appendChild(topRow);
             if (o.status === 'preparing') {
-                statusHtml = `
-                    <div class="mt-3 w-full">
-                        <span class="text-fluid-xs text-[#f59e0b] status-preparing"><iconify-icon icon="solar:chef-hat-linear" class="mr-1"></iconify-icon> Preparando...</span>
-                        <div class="prep-progress-bar"><div class="prep-progress-fill"></div></div>
-                    </div>
-                `;
+                const status = document.createElement('div');
+                status.className = 'mt-3 w-full';
+                const statusLabel = document.createElement('span');
+                statusLabel.className = 'text-fluid-xs text-[#f59e0b] status-preparing';
+                statusLabel.appendChild(createIcon('solar:chef-hat-linear', 'mr-1'));
+                statusLabel.append(' Preparando...');
+                const progressBar = document.createElement('div');
+                progressBar.className = 'prep-progress-bar';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'prep-progress-fill';
+                progressBar.appendChild(progressFill);
+                status.append(statusLabel, progressBar);
+                card.appendChild(status);
             }
             else if (o.status === 'ready') {
-                statusHtml = `
-                    <button class="mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden" data-id="${o.id}">
-                        <!-- Mascote SVG Animado -->
-                        <svg class="mascot-eat" viewBox="0 0 100 100" width="28" height="28">
-                            <circle cx="50" cy="50" r="40" fill="#22c55e" />
-                            <circle cx="65" cy="30" r="6" fill="#1a1a1a" />
-                            <path class="mascot-mouth" d="M50,50 L100,25 A40,40 0 0,1 100,75 Z" fill="#1a1a1a" />
-                        </svg>
-                        <span class="z-10">Comer Pedido (+${o.quantity * 10} XP)</span>
-                    </button>
-                `;
+                const eatBtn = document.createElement('button');
+                eatBtn.className = 'mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden';
+                eatBtn.setAttribute('data-id', o.id);
+                const mascot = document.createElement('img');
+                mascot.src = '/assets/icons/mouse-eating.svg';
+                mascot.alt = 'Mouse Eating Cheese';
+                mascot.className = 'w-8 h-8 mascot-eat drop-shadow-sm';
+                const text = document.createElement('span');
+                text.className = 'z-10';
+                text.textContent = `Comer Pedido (+${o.quantity * 10} XP)`;
+                eatBtn.append(mascot, text);
+                card.appendChild(eatBtn);
             }
             else if (o.status === 'consumed') {
-                statusHtml = `
-                    <div class="mt-3 w-full flex items-center gap-2 text-fluid-xs text-[#9ca3af]">
-                        <iconify-icon icon="solar:check-circle-linear" class="text-[1.1rem] text-[#22c55e]"></iconify-icon> Consumido
-                    </div>
-                `;
+                const consumed = document.createElement('div');
+                consumed.className = 'mt-3 w-full flex items-center gap-2 text-fluid-xs text-[#9ca3af]';
+                consumed.appendChild(createIcon('solar:check-circle-linear', 'text-[1.1rem] text-[#22c55e]'));
+                consumed.append(' Consumido');
+                card.appendChild(consumed);
             }
-            list.innerHTML += `
-                <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex flex-col justify-between items-start transition-all ${o.status === 'ready' ? 'border-[#22c55e]/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : ''}">
-                    <div class="flex justify-between items-start w-full">
-                        <div class="flex flex-col">
-                            <span class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]"><span class="text-[#f59e0b]">${o.quantity}x</span> ${o.name}</span>
-                            <span class="font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5">${formatCurrency(o.price)} un</span>
-                        </div>
-                        <span class="font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]">${formatCurrency(totalItem)}</span>
-                    </div>
-                    ${statusHtml}
-                </div>
-            `;
+            fragment.appendChild(card);
         });
+        list.appendChild(fragment);
     }
     // Attach event listeners to eat buttons
     document.querySelectorAll('.btn-eat').forEach(btn => {

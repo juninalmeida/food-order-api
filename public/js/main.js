@@ -1,3 +1,4 @@
+import "./iconify-local.js";
 import { AppState } from "./state.js";
 import { api } from "./api.js";
 import { renderScreen1, renderScreen2, renderOrders, renderSummary, addXPVisual, updateCartBadge, showToast, openModalUI, closeModalUI, updateModalQtyDisplay } from "./ui.js";
@@ -58,25 +59,6 @@ function closeQtyModal() {
     AppState.selectedProduct = null;
 }
 document.addEventListener('DOMContentLoaded', async () => {
-    // Reset purely for UI presentation purposes
-    AppState.reset();
-    try {
-        const sessions = await api.getSessions();
-        if (sessions) {
-            const activeSessions = sessions.filter(s => !s.closed_at);
-            await Promise.all(activeSessions.map(s => api.closeSession(s.id)));
-        }
-        const tables = await api.getTables();
-        if (tables) {
-            const tableToOccupy = tables.find(t => t.table_number === 4) || tables[0];
-            if (tableToOccupy) {
-                await api.openSession(tableToOccupy.id);
-            }
-        }
-    }
-    catch (err) {
-        console.error("Failed to reset tables on boot:", err);
-    }
     document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const p = AppState.selectedProduct;
@@ -86,22 +68,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeQtyModal();
         const btn = e.currentTarget;
         const rect = btn.getBoundingClientRect();
-        await api.createOrder(AppState.currentSessionId, p.id, q);
-        const clientOrderId = Math.random().toString(36).substring(7);
-        AppState.orders.push({
-            id: clientOrderId,
-            product_id: p.id,
-            name: p.name,
-            price: p.price,
-            quantity: q,
-            total: p.price * q,
-            status: 'preparing'
-        });
-        AppState.sessionTotal += p.price * q;
+        const createOrderResult = await api.createOrder(AppState.currentSessionId, p.id, q);
+        if (createOrderResult === null) {
+            showToast('Erro no pedido', 'Não foi possível registrar o pedido na API.', 'solar:danger-circle-linear');
+            return;
+        }
+        const ordersFromApi = await api.getOrders(AppState.currentSessionId);
+        const latestOrder = ordersFromApi?.at(-1);
+        if (!latestOrder) {
+            showToast('Erro de sincronização', 'Pedido criado, mas não foi possível sincronizar a lista.', 'solar:danger-circle-linear');
+            return;
+        }
+        const confirmedOrderId = String(latestOrder.id);
+        const existingOrderIndex = AppState.orders.findIndex(o => o.id === confirmedOrderId);
+        if (existingOrderIndex > -1) {
+            const existingStatus = AppState.orders[existingOrderIndex].status;
+            AppState.orders[existingOrderIndex] = {
+                id: confirmedOrderId,
+                product_id: latestOrder.product_id,
+                name: latestOrder.name,
+                price: Number(latestOrder.price),
+                quantity: latestOrder.quantity,
+                total: Number(latestOrder.total),
+                status: existingStatus
+            };
+        }
+        else {
+            AppState.orders.push({
+                id: confirmedOrderId,
+                product_id: latestOrder.product_id,
+                name: latestOrder.name,
+                price: Number(latestOrder.price),
+                quantity: latestOrder.quantity,
+                total: Number(latestOrder.total),
+                status: 'preparing'
+            });
+        }
+        const totalsFromApi = await api.getOrdersTotal(AppState.currentSessionId);
+        if (totalsFromApi) {
+            AppState.sessionTotal = Number(totalsFromApi.total);
+            AppState.sessionItems = Number(totalsFromApi.quantity);
+        }
         AppState.saveState();
         // Simulate Preparation Time
         setTimeout(() => {
-            const orderIndex = AppState.orders.findIndex(o => o.id === clientOrderId);
+            const orderIndex = AppState.orders.findIndex(o => o.id === confirmedOrderId);
             if (orderIndex > -1) {
                 AppState.orders[orderIndex].status = 'ready';
                 AppState.saveState();

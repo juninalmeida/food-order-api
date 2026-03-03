@@ -14,7 +14,7 @@ export async function fetchAPI(endpoint, options = {}) {
         }
         // Some endpoints like POST, PATCH might return empty bodies
         const text = await res.text();
-        return text ? JSON.parse(text) : null;
+        return text ? JSON.parse(text) : {};
     }
     catch (err) {
         console.warn(`API falhou para ${endpoint}. Verifique se o backend está rodando.`);

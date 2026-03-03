@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "dev:all": "npm run build:front && concurrently \"npm run watch:front\" \"npm run dev\"",
+    "dev:all": "npm run build:css && npm run build:front && concurrently \"npm run watch:css\" \"npm run watch:front\" \"npm run dev\"",
+    "build": "npm run build:css && npm run build:front",
+    "build:css": "tailwindcss -i ./src/frontend/tailwind.css -o ./public/styles/tailwind.css --minify",
     "build:front": "tsc -p tsconfig.front.json",
+    "watch:css": "tailwindcss -i ./src/frontend/tailwind.css -o ./public/styles/tailwind.css --watch",
     "watch:front": "tsc -p tsconfig.front.json --watch",
     "knex": "node --import tsx ./node_modules/.bin/knex"
   },
@@ -20,10 +23,14 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "@iconify-json/solar": "^1.2.5",
+    "@tailwindcss/cli": "^4.2.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^20.14.12",
     "concurrently": "^9.2.1",
+    "tailwindcss": "^4.2.1",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
   }
