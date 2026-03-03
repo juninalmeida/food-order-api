@@ -29,7 +29,7 @@ class TablesSessionsService {
     }
 
     if (session.closed_at) {
-      throw new AppError("Session is already closed.");
+      return;
     }
 
     await this.tablesSessionsRepository.closeById(id);

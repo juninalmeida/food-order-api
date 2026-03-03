@@ -4,11 +4,46 @@ import { tablesService } from "../services/tables-service.js";
 import { renderScreen1, renderScreen2, renderOrders, renderSummary, addXPVisual, updateCartBadge, showToast, openModalUI, closeModalUI, updateModalQtyDisplay } from "../ui.js";
 let qtyVal = 1;
 let isInitialized = false;
+let lastSessionClosedOnExitId = null;
 const CHECKOUT_DEFAULT_LABEL = '<iconify-icon icon="solar:bill-check-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon> Fechar Conta';
 const CHECKOUT_LOADING_LABEL = '<iconify-icon icon="solar:spinner-linear" class="animate-spin text-[1.5rem]"></iconify-icon> Fechando...';
 function closeQtyModal() {
     closeModalUI();
     AppState.selectedProduct = null;
+}
+function clearCurrentSessionState() {
+    AppState.currentSessionId = null;
+    AppState.currentTableId = null;
+    AppState.orders = [];
+    AppState.sessionTotal = 0;
+    AppState.sessionItems = 0;
+    AppState.sessionXP = 0;
+    AppState.selectedProduct = null;
+    AppState.saveState();
+}
+function closeSessionOnPageExit() {
+    if (!AppState.currentSessionId)
+        return;
+    const sessionId = AppState.currentSessionId;
+    if (lastSessionClosedOnExitId === sessionId)
+        return;
+    lastSessionClosedOnExitId = sessionId;
+    void fetch(`/tables-sessions/${sessionId}`, {
+        method: 'PATCH',
+        keepalive: true,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).catch(() => undefined);
+    clearCurrentSessionState();
+}
+function bindPageLifecycleHandlers() {
+    window.addEventListener('pagehide', () => {
+        closeSessionOnPageExit();
+    });
+    window.addEventListener('beforeunload', () => {
+        closeSessionOnPageExit();
+    });
 }
 function bindGlobalClickHandler() {
     document.addEventListener('click', (e) => {
@@ -185,13 +220,7 @@ async function handleCheckoutClick(e) {
     AppState.sessionXP += 50;
     AppState.triggerAchievement('closed_deal');
     renderSummary();
-    AppState.currentSessionId = null;
-    AppState.currentTableId = null;
-    AppState.orders = [];
-    AppState.sessionTotal = 0;
-    AppState.sessionItems = 0;
-    AppState.sessionXP = 0;
-    AppState.saveState();
+    clearCurrentSessionState();
     button.disabled = false;
     button.innerHTML = CHECKOUT_DEFAULT_LABEL;
 }
@@ -206,9 +235,7 @@ async function handleBackToTablesClick() {
             showToast('Erro na sessão', 'Não foi possível encerrar a mesa agora.', 'solar:danger-circle-linear');
             return;
         }
-        AppState.currentSessionId = null;
-        AppState.currentTableId = null;
-        AppState.saveState();
+        clearCurrentSessionState();
     }
     renderScreen1();
 }
@@ -238,6 +265,7 @@ export function initAppController() {
     bindGlobalClickHandler();
     bindOpenQtyModalHandler();
     bindEatItemHandler();
+    bindPageLifecycleHandlers();
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', onDomReady, { once: true });
     }

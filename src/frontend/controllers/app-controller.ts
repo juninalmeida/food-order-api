@@ -16,6 +16,7 @@ import {
 
 let qtyVal = 1;
 let isInitialized = false;
+let lastSessionClosedOnExitId: number | null = null;
 
 const CHECKOUT_DEFAULT_LABEL = '<iconify-icon icon="solar:bill-check-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon> Fechar Conta';
 const CHECKOUT_LOADING_LABEL = '<iconify-icon icon="solar:spinner-linear" class="animate-spin text-[1.5rem]"></iconify-icon> Fechando...';
@@ -23,6 +24,46 @@ const CHECKOUT_LOADING_LABEL = '<iconify-icon icon="solar:spinner-linear" class=
 function closeQtyModal() {
     closeModalUI();
     AppState.selectedProduct = null;
+}
+
+function clearCurrentSessionState() {
+    AppState.currentSessionId = null;
+    AppState.currentTableId = null;
+    AppState.orders = [];
+    AppState.sessionTotal = 0;
+    AppState.sessionItems = 0;
+    AppState.sessionXP = 0;
+    AppState.selectedProduct = null;
+    AppState.saveState();
+}
+
+function closeSessionOnPageExit() {
+    if (!AppState.currentSessionId) return;
+
+    const sessionId = AppState.currentSessionId;
+    if (lastSessionClosedOnExitId === sessionId) return;
+
+    lastSessionClosedOnExitId = sessionId;
+
+    void fetch(`/tables-sessions/${sessionId}`, {
+        method: 'PATCH',
+        keepalive: true,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).catch(() => undefined);
+
+    clearCurrentSessionState();
+}
+
+function bindPageLifecycleHandlers() {
+    window.addEventListener('pagehide', () => {
+        closeSessionOnPageExit();
+    });
+
+    window.addEventListener('beforeunload', () => {
+        closeSessionOnPageExit();
+    });
 }
 
 function bindGlobalClickHandler() {
@@ -238,13 +279,7 @@ async function handleCheckoutClick(e: Event) {
 
     renderSummary();
 
-    AppState.currentSessionId = null;
-    AppState.currentTableId = null;
-    AppState.orders = [];
-    AppState.sessionTotal = 0;
-    AppState.sessionItems = 0;
-    AppState.sessionXP = 0;
-    AppState.saveState();
+    clearCurrentSessionState();
 
     button.disabled = false;
     button.innerHTML = CHECKOUT_DEFAULT_LABEL;
@@ -263,9 +298,7 @@ async function handleBackToTablesClick() {
             return;
         }
 
-        AppState.currentSessionId = null;
-        AppState.currentTableId = null;
-        AppState.saveState();
+        clearCurrentSessionState();
     }
 
     renderScreen1();
@@ -302,6 +335,7 @@ export function initAppController() {
     bindGlobalClickHandler();
     bindOpenQtyModalHandler();
     bindEatItemHandler();
+    bindPageLifecycleHandlers();
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', onDomReady, { once: true });
