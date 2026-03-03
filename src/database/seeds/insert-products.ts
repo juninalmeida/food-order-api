@@ -4,15 +4,17 @@ export async function seed(knex: Knex): Promise<void> {
   await knex("products").del();
 
   await knex("products").insert([
-    { name: "Nhoque quatro queijos", price: 45 },
-    { name: "Isca de frango", price: 60 },
-    { name: "Tilápia com alcaparras", price: 100 },
-    { name: "Escondidinho de carne", price: 75 },
-    { name: "Porção de batatas fritas", price: 65 },
-    { name: "Executivo de frango grelhado", price: 40 },
-    { name: "Executivo de tilápia grelhada", price: 39 },
-    { name: "Caldo de palmito", price: 30 },
-    { name: "Refrigerante 350ml", price: 7.5 },
-    { name: "Suco de laranja 440ml", price: 10 },
+    { name: "Baião de Dois Arretado", price: 32.90 },
+    { name: "Cuscuz Cabra da Peste", price: 54.50 },
+    { name: "Carne de Sol do Lampião", price: 55.90 },
+    { name: "Macaxeira Nervosa", price: 78.00 },
+    { name: "Escondidinho de Mainha", price: 35.90 },
+    { name: "Sarapatel sem Choro", price: 51.50 },
+    { name: "Siri Fujão", price: 200.50 },
+    { name: "Galinha Forrozeira", price: 96.00 },
+    { name: "Tapioca da Moléstia", price: 20.90 },
+    { name: "Bobó do Oxente", price: 37.50 },
+    { name: "Arrumadinho Desmantelado", price: 103.00 },
+    { name: "Panelada do Cabra Macho", price: 308.90 },
   ]);
 }

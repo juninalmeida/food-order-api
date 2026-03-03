@@ -177,9 +177,9 @@ export async function renderScreen2() {
             AppState.menu = prods;
         } else {
             AppState.menu = [
-                { id: 1, name: 'Nhoque quatro queijos', price: 45.00 },
-                { id: 2, name: 'Isca de frango', price: 60.00 },
-                { id: 3, name: 'Refrigerante', price: 7.50 }
+                { id: 1, name: 'Baião de Dois Arretado', price: 32.90 },
+                { id: 2, name: 'Cuscuz Cabra da Peste', price: 54.50 },
+                { id: 3, name: 'Carne de Sol do Lampião', price: 55.90 }
             ];
         }
     }

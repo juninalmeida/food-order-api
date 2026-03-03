@@ -4,6 +4,8 @@ export async function fetchAPI(endpoint, options = {}) {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             headers: { 'Content-Type': 'application/json' },
+            // @ts-ignore
+            cache: 'no-store',
             ...options
         });
         if (!res.ok) {

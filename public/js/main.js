@@ -1,6 +1,6 @@
 import { AppState } from "./state.js";
 import { api } from "./api.js";
-import { renderScreen1, renderScreen2, renderOrders, renderSummary, addXPVisual, updateCartBadge, showToast } from "./ui.js";
+import { renderScreen1, renderScreen2, renderOrders, renderSummary, addXPVisual, updateCartBadge, showToast, openModalUI, closeModalUI, updateModalQtyDisplay } from "./ui.js";
 // Global click handler for animations & modal actions
 document.addEventListener('click', (e) => {
     const target = e.target;
@@ -17,9 +17,9 @@ document.addEventListener('click', (e) => {
         e.preventDefault();
         if (qtyVal > 1) {
             qtyVal--;
-            const valEl = document.getElementById('modal-qty-val');
-            if (valEl)
-                valEl.innerText = qtyVal.toString();
+            if (AppState.selectedProduct) {
+                updateModalQtyDisplay(AppState.selectedProduct, qtyVal);
+            }
         }
         return;
     }
@@ -28,9 +28,9 @@ document.addEventListener('click', (e) => {
     if (btnPlus) {
         e.preventDefault();
         qtyVal++;
-        const valEl = document.getElementById('modal-qty-val');
-        if (valEl)
-            valEl.innerText = qtyVal.toString();
+        if (AppState.selectedProduct) {
+            updateModalQtyDisplay(AppState.selectedProduct, qtyVal);
+        }
         return;
     }
     // Modal Qty Cancel
@@ -51,30 +51,32 @@ window.addEventListener('openQtyModal', (e) => {
         return;
     AppState.selectedProduct = p;
     qtyVal = 1;
-    const nameEl = document.getElementById('modal-qty-name');
-    const priceEl = document.getElementById('modal-qty-price');
-    const valEl = document.getElementById('modal-qty-val');
-    if (nameEl)
-        nameEl.innerText = p.name;
-    if (priceEl)
-        priceEl.innerText = `R$ ${p.price.toFixed(2).replace('.', ',')}`;
-    if (valEl)
-        valEl.innerText = qtyVal.toString();
-    const m = document.getElementById('modal-qty');
-    if (m) {
-        m.classList.remove('hidden');
-        setTimeout(() => m.firstElementChild?.classList.remove('translate-y-full'), 10);
-    }
+    openModalUI(p, qtyVal);
 });
 function closeQtyModal() {
-    const m = document.getElementById('modal-qty');
-    if (m) {
-        m.firstElementChild?.classList.add('translate-y-full');
-        setTimeout(() => m.classList.add('hidden'), 300);
-    }
+    closeModalUI();
     AppState.selectedProduct = null;
 }
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Reset purely for UI presentation purposes
+    AppState.reset();
+    try {
+        const sessions = await api.getSessions();
+        if (sessions) {
+            const activeSessions = sessions.filter(s => !s.closed_at);
+            await Promise.all(activeSessions.map(s => api.closeSession(s.id)));
+        }
+        const tables = await api.getTables();
+        if (tables) {
+            const tableToOccupy = tables.find(t => t.table_number === 4) || tables[0];
+            if (tableToOccupy) {
+                await api.openSession(tableToOccupy.id);
+            }
+        }
+    }
+    catch (err) {
+        console.error("Failed to reset tables on boot:", err);
+    }
     document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const p = AppState.selectedProduct;
@@ -208,14 +210,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-new-table')?.addEventListener('click', () => {
         renderScreen1();
     });
-    document.getElementById('btn-back-tables')?.addEventListener('click', () => {
+    document.getElementById('btn-back-tables')?.addEventListener('click', async () => {
+        if (AppState.orders.length > 0) {
+            showToast('Atenção', 'Você não pode sair da mesa com pedidos em andamento. Feche a conta.', 'solar:danger-circle-linear');
+            return;
+        }
+        if (AppState.currentSessionId) {
+            await api.closeSession(AppState.currentSessionId);
+            AppState.currentSessionId = null;
+            AppState.currentTableId = null;
+            AppState.saveState();
+        }
         renderScreen1();
     });
-    // Initial render
-    if (AppState.currentSessionId && AppState.currentTableId) {
-        renderScreen2();
-    }
-    else {
-        renderScreen1();
-    }
+    // Because we reset state on load, we always start at screen 1
+    renderScreen1();
 });

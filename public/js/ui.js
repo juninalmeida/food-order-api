@@ -160,9 +160,9 @@ export async function renderScreen2() {
         }
         else {
             AppState.menu = [
-                { id: 1, name: 'Nhoque quatro queijos', price: 45.00 },
-                { id: 2, name: 'Isca de frango', price: 60.00 },
-                { id: 3, name: 'Refrigerante', price: 7.50 }
+                { id: 1, name: 'Baião de Dois Arretado', price: 32.90 },
+                { id: 2, name: 'Cuscuz Cabra da Peste', price: 54.50 },
+                { id: 3, name: 'Carne de Sol do Lampião', price: 55.90 }
             ];
         }
     }
@@ -170,16 +170,46 @@ export async function renderScreen2() {
     AppState.menu.forEach(p => {
         const isDrink = p.name.toLowerCase().includes('refrigerante') || p.name.toLowerCase().includes('suco');
         const isPremium = p.price > 80;
-        let icon = 'solar:plate-linear';
-        if (isDrink)
-            icon = 'solar:cup-linear';
-        else if (isPremium)
-            icon = 'solar:chef-hat-linear';
+        let customSvg = '';
+        if (isDrink) {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 12L10 28H22L24 12" fill="currentColor" fill-opacity="0.15" />
+                <path d="M14 12L18 3H21" stroke-width="2.5" />
+                <path d="M9.5 16H22.5" stroke-dasharray="2 3" />
+                <path d="M24 12C24 12 18 14 16 14C14 14 8 12 8 12" />
+                <circle cx="23" cy="11" r="4" fill="currentColor" fill-opacity="0.2" />
+                <path d="M23 7V15M19 11H27" stroke-width="1.5" />
+            </svg>`;
+        }
+        else if (isPremium) {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 22H28" stroke-width="2.5" />
+                <path d="M6 22C6 13 10 8 16 8C22 8 26 13 26 22" fill="currentColor" fill-opacity="0.15" />
+                <circle cx="16" cy="6" r="2" fill="currentColor" />
+                <path d="M24 6L25 3L28 4" stroke-width="1.5" />
+                <path d="M6 8L5 5L2 6" stroke-width="1.5" />
+                <path d="M3 25C3 25 8 27 16 27C24 27 29 25 29 25" />
+            </svg>`;
+        }
+        else {
+            customSvg = `
+            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 14C6 8 11 4 16 4C21 4 26 8 26 14H6Z" fill="currentColor" fill-opacity="0.2" />
+                <path d="M5 15C6 17 8 14 10 16C12 18 14 14 16 16C18 18 20 14 22 16C24 18 26 17 27 15" stroke-width="2.5" />
+                <rect x="6" y="18" width="20" height="3" rx="1.5" fill="currentColor" fill-opacity="0.4" stroke="none" />
+                <path d="M7 23H25C25 25 22 28 16 28C10 28 7 25 7 23Z" fill="currentColor" fill-opacity="0.1" />
+                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
+                <circle cx="16" cy="6" r="1" fill="currentColor" stroke="none" />
+                <circle cx="20" cy="9" r="1" fill="currentColor" stroke="none" />
+            </svg>`;
+        }
         const card = document.createElement('div');
         card.className = 'bg-[#1a1a1a]/80 backdrop-blur-md border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-4 hover-glow transition-all group';
         card.innerHTML = `
-            <div class="w-12 h-12 rounded-full bg-[#0d0d0d] border border-[#2a2a2a] flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 transition-colors">
-                <iconify-icon icon="${icon}" stroke-width="1.5" class="text-[1.5rem] text-[#9ca3af] group-hover:text-[#f59e0b] transition-colors"></iconify-icon>
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all">
+                ${customSvg}
             </div>
             <div class="flex-grow min-w-0">
                 <h3 class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate">${p.name}</h3>
@@ -316,4 +346,35 @@ export function renderSummary() {
             `;
         });
     }
+}
+export function openModalUI(product, qty = 1) {
+    const nameEl = document.getElementById('modal-qty-name');
+    const priceEl = document.getElementById('modal-qty-price');
+    const valEl = document.getElementById('modal-qty-val');
+    if (nameEl)
+        nameEl.innerText = product.name;
+    if (priceEl)
+        priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
+    if (valEl)
+        valEl.innerText = qty.toString();
+    const m = document.getElementById('modal-qty');
+    if (m) {
+        m.classList.remove('hidden');
+        setTimeout(() => m.firstElementChild?.classList.remove('translate-y-full'), 10);
+    }
+}
+export function closeModalUI() {
+    const m = document.getElementById('modal-qty');
+    if (m) {
+        m.firstElementChild?.classList.add('translate-y-full');
+        setTimeout(() => m.classList.add('hidden'), 300);
+    }
+}
+export function updateModalQtyDisplay(product, qty) {
+    const valEl = document.getElementById('modal-qty-val');
+    if (valEl)
+        valEl.innerText = qty.toString();
+    const priceEl = document.getElementById('modal-qty-price');
+    if (priceEl)
+        priceEl.innerText = `R$ ${(product.price * qty).toFixed(2).replace('.', ',')}`;
 }

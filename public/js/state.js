@@ -55,6 +55,20 @@ class State {
             localStorage.removeItem('current_table_id');
         }
     }
+    reset() {
+        localStorage.clear();
+        this.xp = 0;
+        this.achievements = [];
+        this.currentSessionId = null;
+        this.currentTableId = null;
+        this.orders = [];
+        this.lastOrderTime = 0;
+        this.sessionXP = 0;
+        this.sessionTotal = 0;
+        this.sessionItems = 0;
+        this.selectedProduct = null;
+        this.saveState();
+    }
     getLevelInfo() {
         if (this.xp >= 1000)
             return { name: 'Lenda da Cozinha', badge: 'solar:crown-linear', color: 'rainbow-text', min: 1000, max: 2000 };

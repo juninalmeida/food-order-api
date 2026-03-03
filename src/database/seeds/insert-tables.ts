@@ -10,14 +10,15 @@ export async function seed(knex: Knex): Promise<void> {
     { table_number: 3 },
     { table_number: 4 },
     { table_number: 5 },
+    { table_number: 6 }
   ]).returning("id");
 
   // Create an active session for table 2 to test "Occupied" state in UI
   if (tables && tables.length >= 2) {
     const tableId = typeof tables[1] === 'object' ? tables[1].id : tables[1];
-    
+
     await knex("tables_sessions").insert([
-        { table_id: tableId, opened_at: Date.now() }
+      { table_id: tableId, opened_at: Date.now() }
     ]);
   }
 }
