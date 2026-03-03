@@ -78,7 +78,27 @@ function closeQtyModal() {
     AppState.selectedProduct = null;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+
+    // Reset purely for UI presentation purposes
+    AppState.reset();
+    try {
+        const sessions = await api.getSessions();
+        if (sessions) {
+            const activeSessions = sessions.filter(s => !s.closed_at);
+            await Promise.all(activeSessions.map(s => api.closeSession(s.id)));
+        }
+
+        const tables = await api.getTables();
+        if (tables) {
+            const tableToOccupy = tables.find(t => t.table_number === 4) || tables[0];
+            if (tableToOccupy) {
+                await api.openSession(tableToOccupy.id);
+            }
+        }
+    } catch (err) {
+        console.error("Failed to reset tables on boot:", err);
+    }
 
     document.getElementById('btn-qty-confirm')?.addEventListener('click', async (e) => {
         e.preventDefault();
@@ -241,10 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderScreen1();
     });
 
-    // Initial render
-    if (AppState.currentSessionId && AppState.currentTableId) {
-        renderScreen2();
-    } else {
-        renderScreen1();
-    }
+    // Because we reset state on load, we always start at screen 1
+    renderScreen1();
 });
