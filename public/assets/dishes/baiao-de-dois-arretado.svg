@@ -1,0 +1,15 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bowl -->
+  <path d="M12 32 C12 50, 20 56, 32 56 C44 56, 52 50, 52 32 Z" fill="#8B4513" />
+  <path d="M10 32 Q32 40 54 32" stroke="#A0522D" stroke-width="4" fill="none"/>
+  <!-- Rice and Beans -->
+  <circle cx="24" cy="28" r="8" fill="#F5DEB3"/> <!-- Rice grain cluster -->
+  <circle cx="34" cy="26" r="6" fill="#8B0000"/> <!-- Bean -->
+  <circle cx="42" cy="29" r="6" fill="#F5DEB3"/>
+  <circle cx="28" cy="24" r="5" fill="#8B0000"/>
+  <!-- Cheese cubes -->
+  <rect x="20" y="20" width="8" height="8" fill="#FFD700" rx="1"/>
+  <rect x="36" y="20" width="8" height="8" fill="#FFD700" rx="1"/>
+  <!-- Coriander -->
+  <path d="M30 18 Q32 12 34 18 Q36 22 30 18" fill="#228B22"/>
+</svg>

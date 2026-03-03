@@ -1,0 +1,14 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clay Pot -->
+  <path d="M10 26 C10 50, 16 54, 32 54 C48 54, 54 50, 54 26 Z" fill="#A0522D"/>
+  <ellipse cx="32" cy="26" rx="22" ry="8" fill="#8B4513"/>
+  <!-- Mashed Cassava Top -->
+  <ellipse cx="32" cy="24" rx="20" ry="6" fill="#FFE4B5"/>
+  <!-- Burned Cheese spots -->
+  <circle cx="26" cy="23" r="3" fill="#DAA520"/>
+  <circle cx="36" cy="25" r="4" fill="#CD853F"/>
+  <circle cx="32" cy="21" r="2" fill="#DAA520"/>
+  <!-- Steam -->
+  <path d="M26 16 Q28 10 26 4" stroke="#DCDCDC" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M38 14 Q36 8 38 4" stroke="#DCDCDC" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>

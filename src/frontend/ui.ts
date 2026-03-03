@@ -186,42 +186,14 @@ export async function renderScreen2() {
 
     grid.innerHTML = '';
     AppState.menu.forEach(p => {
-        const isDrink = p.name.toLowerCase().includes('refrigerante') || p.name.toLowerCase().includes('suco');
-        const isPremium = p.price > 80;
+        // Convert name to svg path (e.g Baião de Dois Arretado -> baiao-de-dois-arretado.svg)
+        const slug = p.name
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/\s+/g, '-');
 
-        let customSvg = '';
-        if (isDrink) {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 12L10 28H22L24 12" fill="currentColor" fill-opacity="0.15" />
-                <path d="M14 12L18 3H21" stroke-width="2.5" />
-                <path d="M9.5 16H22.5" stroke-dasharray="2 3" />
-                <path d="M24 12C24 12 18 14 16 14C14 14 8 12 8 12" />
-                <circle cx="23" cy="11" r="4" fill="currentColor" fill-opacity="0.2" />
-                <path d="M23 7V15M19 11H27" stroke-width="1.5" />
-            </svg>`;
-        } else if (isPremium) {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 22H28" stroke-width="2.5" />
-                <path d="M6 22C6 13 10 8 16 8C22 8 26 13 26 22" fill="currentColor" fill-opacity="0.15" />
-                <circle cx="16" cy="6" r="2" fill="currentColor" />
-                <path d="M24 6L25 3L28 4" stroke-width="1.5" />
-                <path d="M6 8L5 5L2 6" stroke-width="1.5" />
-                <path d="M3 25C3 25 8 27 16 27C24 27 29 25 29 25" />
-            </svg>`;
-        } else {
-            customSvg = `
-            <svg viewBox="0 0 32 32" class="w-8 h-8 drop-shadow-md text-[#9ca3af] group-hover:text-[#f59e0b] transition-all" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M6 14C6 8 11 4 16 4C21 4 26 8 26 14H6Z" fill="currentColor" fill-opacity="0.2" />
-                <path d="M5 15C6 17 8 14 10 16C12 18 14 14 16 16C18 18 20 14 22 16C24 18 26 17 27 15" stroke-width="2.5" />
-                <rect x="6" y="18" width="20" height="3" rx="1.5" fill="currentColor" fill-opacity="0.4" stroke="none" />
-                <path d="M7 23H25C25 25 22 28 16 28C10 28 7 25 7 23Z" fill="currentColor" fill-opacity="0.1" />
-                <circle cx="12" cy="8" r="1" fill="currentColor" stroke="none" />
-                <circle cx="16" cy="6" r="1" fill="currentColor" stroke="none" />
-                <circle cx="20" cy="9" r="1" fill="currentColor" stroke="none" />
-            </svg>`;
-        }
+        const customSvg = `<img src="/assets/dishes/${slug}.svg" alt="${p.name}" class="w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\'><path fill=\\'%239ca3af\\' d=\\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z\\'/></svg>'"/>`;
 
         const card = document.createElement('div');
         card.className = 'bg-[#1a1a1a]/80 backdrop-blur-md border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-4 hover-glow transition-all group';

@@ -1,0 +1,13 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Big Iron Cauldron -->
+  <path d="M12 24 C4 48, 16 60, 32 60 C48 60, 60 48, 52 24 Z" fill="#000000"/>
+  <ellipse cx="32" cy="24" rx="20" ry="8" fill="#1A1A1A"/>
+  <!-- Stew -->
+  <ellipse cx="32" cy="24" rx="18" ry="6" fill="#8B4513"/>
+  <!-- Tripe and veggies -->
+  <path d="M22 24 Q24 20 28 24 Q30 28 26 26" fill="#F5DEB3" stroke="#D2B48C" stroke-width="1"/>
+  <path d="M38 22 Q40 18 44 22 Q46 26 42 24" fill="#F5DEB3" stroke="#D2B48C" stroke-width="1"/>
+  <circle cx="30" cy="20" r="3" fill="#228B22"/> <!-- Herb -->
+  <path d="M20 12 Q28 6 30 16" stroke="#DCDCDC" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M44 14 Q36 4 34 14" stroke="#DCDCDC" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>

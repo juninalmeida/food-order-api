@@ -1,0 +1,13 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Crab Shell -->
+  <path d="M12 36 C8 24, 24 16, 32 16 C40 16, 56 24, 52 36 C48 48, 16 48, 12 36 Z" fill="#FF4500"/>
+  <path d="M18 34 C18 26, 26 22, 32 22 C38 22, 46 26, 46 34 C46 42, 18 42, 18 34 Z" fill="#FFA07A"/>
+  <!-- Farofa/Stuffed meat -->
+  <ellipse cx="32" cy="32" rx="12" ry="6" fill="#F0E68C"/>
+  <circle cx="28" cy="30" r="1" fill="#8B4513"/>
+  <circle cx="34" cy="33" r="1.5" fill="#D2691E"/>
+  <circle cx="36" cy="30" r="1" fill="#8B4513"/>
+  <!-- Crab legs playfully crossing -->
+  <path d="M12 36 Q4 32 6 24" stroke="#FF4500" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M52 36 Q60 32 58 24" stroke="#FF4500" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>

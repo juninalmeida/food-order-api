@@ -1,0 +1,11 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Plate -->
+  <ellipse cx="32" cy="50" rx="28" ry="8" fill="#F0F8FF"/>
+  <ellipse cx="32" cy="48" rx="24" ry="6" fill="#FFFFFF"/>
+  <!-- Tapioca -->
+  <path d="M14 46 C20 30, 44 30, 50 46" fill="#FDF5E6" stroke="#FAEBD7" stroke-width="2"/>
+  <path d="M16 46 C24 38, 40 38, 48 46" fill="#FFF8DC"/>
+  <!-- Filling peeking out -->
+  <path d="M22 46 C26 40, 38 40, 42 46" fill="#8B0000"/> <!-- Meat/cheese filling -->
+  <circle cx="32" cy="44" r="3" fill="#FFD700"/>
+</svg>

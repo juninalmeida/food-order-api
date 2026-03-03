@@ -1,0 +1,19 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rectangular wooden platter -->
+  <rect x="8" y="30" width="48" height="16" rx="4" fill="#8B4513"/>
+  <rect x="10" y="28" width="44" height="14" rx="2" fill="#D2B48C"/>
+  <!-- Layers of ingredients side by side -->
+  <!-- Farofa -->
+  <rect x="12" y="24" width="12" height="10" rx="3" fill="#F0E68C"/>
+  <circle cx="16" cy="26" r="1" fill="#CD853F"/>
+  <circle cx="20" cy="28" r="1" fill="#CD853F"/>
+  <!-- Vinaigrette -->
+  <rect x="24" y="24" width="12" height="10" rx="3" fill="#FFFACD"/>
+  <rect x="26" y="26" width="3" height="3" fill="#FF4500"/>
+  <rect x="30" y="28" width="3" height="3" fill="#32CD32"/>
+  <rect x="32" y="25" width="2" height="2" fill="#FF4500"/>
+  <!-- Beans -->
+  <rect x="36" y="24" width="8" height="10" rx="3" fill="#8B0000"/>
+  <!-- Jerky -->
+  <rect x="44" y="22" width="8" height="12" rx="3" fill="#4A0000"/>
+</svg>
