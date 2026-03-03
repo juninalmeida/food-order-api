@@ -257,7 +257,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderScreen1();
     });
 
-    document.getElementById('btn-back-tables')?.addEventListener('click', () => {
+    document.getElementById('btn-back-tables')?.addEventListener('click', async () => {
+        if (AppState.orders.length > 0) {
+            showToast('Atenção', 'Você não pode sair da mesa com pedidos em andamento. Feche a conta.', 'solar:danger-circle-linear');
+            return;
+        }
+
+        if (AppState.currentSessionId) {
+            await api.closeSession(AppState.currentSessionId);
+            AppState.currentSessionId = null;
+            AppState.currentTableId = null;
+            AppState.saveState();
+        }
+
         renderScreen1();
     });
 
