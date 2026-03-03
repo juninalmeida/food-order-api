@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:all": "npm run build:css && npm run build:front && concurrently \"npm run watch:css\" \"npm run watch:front\" \"npm run dev\"",
-    "build": "npm run build:css && npm run build:front && npm run build:server",
+    "build": "npm run build:front && npm run build:server",
+    "build:full": "npm run build:css && npm run build:front && npm run build:server",
     "start": "node dist/scripts/start.js",
     "build:css": "tailwindcss -i ./src/frontend/tailwind.css -o ./public/styles/tailwind.css --minify",
     "build:front": "tsc -p tsconfig.front.json",
@@ -37,5 +38,8 @@
     "tailwindcss": "^4.2.1",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
