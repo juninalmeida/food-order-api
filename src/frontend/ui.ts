@@ -115,8 +115,10 @@ export async function renderScreen1() {
     let tables = await api.getTables();
     let sessions = await api.getSessions();
 
-    if (!tables) tables = Array.from({ length: 5 }, (_, i) => ({ id: i + 1, table_number: i + 1 }));
-    if (!sessions) sessions = [];
+    if (!tables || !sessions) {
+        grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar as mesas agora.</div>';
+        return;
+    }
 
     const activeSessions = sessions.filter(s => !s.closed_at);
 
@@ -142,13 +144,30 @@ export async function renderScreen1() {
                 showToast('Mesa Indisponível', 'Esta mesa já está ocupada por outros clientes.', 'solar:lock-password-linear');
                 return;
             } else {
-                const newSession = await api.openSession(t.id);
+                const openSessionResult = await api.openSession(t.id);
+                if (openSessionResult === null) {
+                    showToast('Erro na sessão', 'Não foi possível abrir a mesa agora.', 'solar:danger-circle-linear');
+                    return;
+                }
+
                 // Como o backend (create) pode não retornar o objeto inteiro da sessão (ele retorna status 201 vazio), 
                 // Precisamos buscar as sessões novamente para pegar o ID da que acabou de ser criada
                 const updatedSessions = await api.getSessions();
-                const latestSession = updatedSessions?.reverse().find(s => s.table_id === t.id && !s.closed_at);
+                if (!updatedSessions) {
+                    showToast('Erro de sincronização', 'A sessão abriu, mas a interface não conseguiu sincronizar.', 'solar:danger-circle-linear');
+                    return;
+                }
 
-                AppState.currentSessionId = latestSession ? latestSession.id : Math.floor(Math.random() * 10000);
+                const latestSession = [...updatedSessions]
+                    .reverse()
+                    .find(s => s.table_id === t.id && !s.closed_at);
+
+                if (!latestSession) {
+                    showToast('Erro de sincronização', 'A sessão abriu, mas não foi encontrada para esta mesa.', 'solar:danger-circle-linear');
+                    return;
+                }
+
+                AppState.currentSessionId = latestSession.id;
                 AppState.currentTableId = t.table_number;
             }
             AppState.saveState();
@@ -172,16 +191,13 @@ export async function renderScreen2() {
 
     if (AppState.menu.length === 0) {
         grid.innerHTML = Array(6).fill(0).map(() => `<div class="h-32 bg-[#1a1a1a]/80 rounded-xl border border-[#2a2a2a] animate-pulse"></div>`).join('');
-        let prods = await api.getProducts();
-        if (prods) {
-            AppState.menu = prods;
-        } else {
-            AppState.menu = [
-                { id: 1, name: 'Baião de Dois Arretado', price: 32.90 },
-                { id: 2, name: 'Cuscuz Cabra da Peste', price: 54.50 },
-                { id: 3, name: 'Carne de Sol do Lampião', price: 55.90 }
-            ];
+        const prods = await api.getProducts();
+        if (!prods) {
+            grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar o cardápio agora.</div>';
+            return;
         }
+
+        AppState.menu = prods;
     }
 
     grid.innerHTML = '';
@@ -239,8 +255,41 @@ export async function renderOrders() {
     const list = document.getElementById('orders-list');
     if (!list) return;
 
-    // Removemos o sync total com a API aqui pois o status real (preparando/comido) agora é mantido localmente
-    // Para simplificar a demonstração, usaremos apenas a AppState.orders.
+    const [ordersFromApi, totalsFromApi] = await Promise.all([
+        api.getOrders(AppState.currentSessionId),
+        api.getOrdersTotal(AppState.currentSessionId)
+    ]);
+
+    if (ordersFromApi) {
+        const statusByOrderId = new Map(AppState.orders.map(order => [order.id, order.status]));
+
+        AppState.orders = ordersFromApi.map(order => {
+            const orderId = String(order.id);
+
+            return {
+                id: orderId,
+                product_id: order.product_id,
+                name: order.name,
+                price: Number(order.price),
+                quantity: Number(order.quantity),
+                total: Number(order.total),
+                status: statusByOrderId.get(orderId) ?? 'preparing',
+                table_session_id: order.table_session_id,
+                created_at: order.created_at,
+                updated_at: order.updated_at
+            };
+        });
+    }
+
+    if (totalsFromApi) {
+        AppState.sessionTotal = Number(totalsFromApi.total);
+        AppState.sessionItems = Number(totalsFromApi.quantity);
+    }
+
+    if (ordersFromApi || totalsFromApi) {
+        AppState.saveState();
+    }
+
     const orders = AppState.orders;
 
     list.innerHTML = '';

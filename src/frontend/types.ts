@@ -20,8 +20,20 @@ export interface TableSession {
     closed_at: string | null;
 }
 
+export interface ApiOrder {
+    id: number;
+    table_session_id: number;
+    product_id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    total: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface OrderItem {
-    id?: string; // Client-side tracking ID
+    id: string;
     product_id: number;
     name: string;
     price: number;

@@ -1,4 +1,4 @@
-import { Product, Table, TableSession, OrderItem } from "./types.js";
+import { Product, Table, TableSession, ApiOrder } from "./types.js";
 
 // Use relative path for API calls since frontend is served by the same server
 const API_BASE = '';
@@ -20,7 +20,7 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
 
         // Some endpoints like POST, PATCH might return empty bodies
         const text = await res.text();
-        return text ? JSON.parse(text) : null;
+        return text ? JSON.parse(text) : ({} as T);
     } catch (err) {
         console.warn(`API falhou para ${endpoint}. Verifique se o backend está rodando.`);
         return null;
@@ -52,7 +52,7 @@ export const api = {
         })
     }),
 
-    getOrders: (sessionId: number) => fetchAPI<OrderItem[]>(`/orders/table-session/${sessionId}`),
+    getOrders: (sessionId: number) => fetchAPI<ApiOrder[]>(`/orders/table-session/${sessionId}`),
 
     getOrdersTotal: (sessionId: number) => fetchAPI<{ total: number, quantity: number }>(`/orders/table-session/${sessionId}/total`)
 };
