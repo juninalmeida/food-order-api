@@ -7,21 +7,57 @@ function formatCurrency(val: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 }
 
+const FALLBACK_DISH_ICON = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%239ca3af' d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/></svg>";
+const SAFE_ICON_PATTERN = /^[a-z0-9:-]+$/i;
+
+function createIcon(iconName: string, className: string, strokeWidth: string = "1.5"): HTMLElement {
+    const icon = document.createElement('iconify-icon');
+    icon.setAttribute('icon', SAFE_ICON_PATTERN.test(iconName) ? iconName : 'solar:danger-circle-linear');
+    icon.setAttribute('stroke-width', strokeWidth);
+    icon.className = className;
+
+    return icon;
+}
+
+function toDishSlug(name: string): string {
+    const slug = name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    return slug || "dish";
+}
+
 export function showToast(title: string, desc: string, iconName: string) {
     const container = document.getElementById('toast-container');
     if (!container) return;
 
     const toast = document.createElement('div');
     toast.className = 'glass-panel border-[#f59e0b]/50 rounded-xl p-4 flex items-start gap-3 shadow-lg toast-enter';
-    toast.innerHTML = `
-        <div class="w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0">
-            <iconify-icon icon="${iconName}" stroke-width="1.5" class="text-[1.5rem] text-[#f59e0b]"></iconify-icon>
-        </div>
-        <div class="flex flex-col">
-            <span class="font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]">${title}</span>
-            <span class="text-fluid-xs text-[#9ca3af] mt-0.5">${desc}</span>
-        </div>
-    `;
+
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'w-10 h-10 rounded-full bg-[#f59e0b]/10 flex items-center justify-center shrink-0';
+    iconWrapper.appendChild(createIcon(iconName, 'text-[1.5rem] text-[#f59e0b]'));
+
+    const content = document.createElement('div');
+    content.className = 'flex flex-col';
+
+    const titleEl = document.createElement('span');
+    titleEl.className = "font-['Cinzel'] tracking-tight font-medium text-fluid-body text-[#f5f5f5]";
+    titleEl.textContent = title;
+
+    const descEl = document.createElement('span');
+    descEl.className = 'text-fluid-xs text-[#9ca3af] mt-0.5';
+    descEl.textContent = desc;
+
+    content.append(titleEl, descEl);
+    toast.append(iconWrapper, content);
+
     container.appendChild(toast);
     setTimeout(() => {
         if (container.contains(toast)) toast.remove();
@@ -130,13 +166,19 @@ export async function renderScreen1() {
         const card = document.createElement('div');
         card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
 
-        let iconHtml = isOccupied ? `<iconify-icon icon="solar:fire-bold" class="text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4"></iconify-icon>` : '';
+        if (isOccupied) {
+            card.appendChild(createIcon('solar:fire-bold', 'text-[clamp(2rem,6vw,3rem)] text-[#ef4444] animate-fire absolute -top-4', '1.5'));
+        }
 
-        card.innerHTML = `
-            ${iconHtml}
-            <span class="font-['Cinzel'] tracking-tight font-medium text-[clamp(2rem,8vw,4rem)] text-[#f5f5f5] leading-none mb-2">${t.table_number.toString().padStart(2, '0')}</span>
-            <span class="text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#f59e0b]'}">${isOccupied ? 'Ocupada' : 'Livre'}</span>
-        `;
+        const tableNumber = document.createElement('span');
+        tableNumber.className = "font-['Cinzel'] tracking-tight font-medium text-[clamp(2rem,8vw,4rem)] text-[#f5f5f5] leading-none mb-2";
+        tableNumber.textContent = t.table_number.toString().padStart(2, '0');
+
+        const availability = document.createElement('span');
+        availability.className = `text-fluid-xs font-medium uppercase tracking-widest ${isOccupied ? 'text-[#ef4444]' : 'text-[#f59e0b]'}`;
+        availability.textContent = isOccupied ? 'Ocupada' : 'Livre';
+
+        card.append(tableNumber, availability);
 
         card.onclick = async () => {
             if (isOccupied && session) {
@@ -202,29 +244,38 @@ export async function renderScreen2() {
 
     grid.innerHTML = '';
     AppState.menu.forEach(p => {
-        // Convert name to svg path (e.g Baião de Dois Arretado -> baiao-de-dois-arretado.svg)
-        const slug = p.name
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/\s+/g, '-');
-
-        const customSvg = `<img src="/assets/dishes/${slug}.svg" alt="${p.name}" class="w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\'><path fill=\\'%239ca3af\\' d=\\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z\\'/></svg>'"/>`;
-
         const card = document.createElement('div');
         card.className = 'bg-[#1a1a1a]/80 backdrop-blur-md border border-[#2a2a2a] rounded-xl p-4 flex items-center gap-4 hover-glow transition-all group';
-        card.innerHTML = `
-            <div class="w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all">
-                ${customSvg}
-            </div>
-            <div class="flex-grow min-w-0">
-                <h3 class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate">${p.name}</h3>
-                <p class="font-['JetBrains_Mono'] text-fluid-price text-[#9ca3af] mt-1">${formatCurrency(p.price)}</p>
-            </div>
-            <button class="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[#f5f5f5] hover:bg-[#f5f5f5] hover:text-[#0d0d0d] transition-colors shrink-0 clickable btn-add" data-id="${p.id}">
-                <iconify-icon icon="solar:add-linear" stroke-width="1.5" class="text-[1.25rem]"></iconify-icon>
-            </button>
-        `;
+        const iconBox = document.createElement('div');
+        iconBox.className = 'w-14 h-14 rounded-xl bg-gradient-to-tl from-[#0d0d0d] to-[#1a1a1a] border border-[#2a2a2a] shadow-inner flex items-center justify-center shrink-0 group-hover:border-[#f59e0b]/50 group-hover:shadow-[inset_0_0_10px_rgba(245,158,11,0.1)] transition-all';
+
+        const dishImage = document.createElement('img');
+        dishImage.className = 'w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300';
+        dishImage.src = `/assets/dishes/${toDishSlug(p.name)}.svg`;
+        dishImage.alt = p.name;
+        dishImage.addEventListener('error', () => {
+            dishImage.src = FALLBACK_DISH_ICON;
+        }, { once: true });
+        iconBox.appendChild(dishImage);
+
+        const content = document.createElement('div');
+        content.className = 'flex-grow min-w-0';
+
+        const title = document.createElement('h3');
+        title.className = "font-['Inter'] font-medium text-fluid-body text-[#f5f5f5] truncate";
+        title.textContent = p.name;
+
+        const price = document.createElement('p');
+        price.className = "font-['JetBrains_Mono'] text-fluid-price text-[#9ca3af] mt-1";
+        price.textContent = formatCurrency(p.price);
+        content.append(title, price);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[#f5f5f5] hover:bg-[#f5f5f5] hover:text-[#0d0d0d] transition-colors shrink-0 clickable btn-add';
+        addBtn.setAttribute('data-id', String(p.id));
+        addBtn.appendChild(createIcon('solar:add-linear', 'text-[1.25rem]'));
+
+        card.append(iconBox, content, addBtn);
         grid.appendChild(card);
     });
 
@@ -294,48 +345,90 @@ export async function renderOrders() {
 
     list.innerHTML = '';
     if (orders.length === 0) {
-        list.innerHTML = '<div class="text-center text-[#9ca3af] py-10">Nenhum pedido realizado.</div>';
+        const empty = document.createElement('div');
+        empty.className = 'text-center text-[#9ca3af] py-10';
+        empty.textContent = 'Nenhum pedido realizado.';
+        list.appendChild(empty);
     } else {
+        const fragment = document.createDocumentFragment();
+
         orders.forEach(o => {
             const totalItem = o.total || (o.price * o.quantity);
+            const card = document.createElement('div');
+            card.className = `bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex flex-col justify-between items-start transition-all ${o.status === 'ready' ? 'border-[#22c55e]/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : ''}`;
 
-            let statusHtml = '';
+            const topRow = document.createElement('div');
+            topRow.className = 'flex justify-between items-start w-full';
+
+            const left = document.createElement('div');
+            left.className = 'flex flex-col';
+
+            const title = document.createElement('span');
+            title.className = "font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]";
+
+            const qty = document.createElement('span');
+            qty.className = 'text-[#f59e0b]';
+            qty.textContent = `${o.quantity}x`;
+            title.appendChild(qty);
+            title.append(` ${o.name}`);
+
+            const unitPrice = document.createElement('span');
+            unitPrice.className = "font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5";
+            unitPrice.textContent = `${formatCurrency(o.price)} un`;
+            left.append(title, unitPrice);
+
+            const total = document.createElement('span');
+            total.className = "font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]";
+            total.textContent = formatCurrency(totalItem);
+            topRow.append(left, total);
+
+            card.appendChild(topRow);
+
             if (o.status === 'preparing') {
-                statusHtml = `
-                    <div class="mt-3 w-full">
-                        <span class="text-fluid-xs text-[#f59e0b] status-preparing"><iconify-icon icon="solar:chef-hat-linear" class="mr-1"></iconify-icon> Preparando...</span>
-                        <div class="prep-progress-bar"><div class="prep-progress-fill"></div></div>
-                    </div>
-                `;
+                const status = document.createElement('div');
+                status.className = 'mt-3 w-full';
+
+                const statusLabel = document.createElement('span');
+                statusLabel.className = 'text-fluid-xs text-[#f59e0b] status-preparing';
+                statusLabel.appendChild(createIcon('solar:chef-hat-linear', 'mr-1'));
+                statusLabel.append(' Preparando...');
+
+                const progressBar = document.createElement('div');
+                progressBar.className = 'prep-progress-bar';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'prep-progress-fill';
+                progressBar.appendChild(progressFill);
+
+                status.append(statusLabel, progressBar);
+                card.appendChild(status);
             } else if (o.status === 'ready') {
-                statusHtml = `
-                    <button class="mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden" data-id="${o.id}">
-                        <!-- Mascote SVG Animado -->
-                        <img src="/assets/icons/mouse-eating.svg" alt="Mouse Eating Cheese" class="w-8 h-8 mascot-eat drop-shadow-sm" />
-                        <span class="z-10">Comer Pedido (+${o.quantity * 10} XP)</span>
-                    </button>
-                `;
+                const eatBtn = document.createElement('button');
+                eatBtn.className = 'mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden';
+                eatBtn.setAttribute('data-id', o.id);
+
+                const mascot = document.createElement('img');
+                mascot.src = '/assets/icons/mouse-eating.svg';
+                mascot.alt = 'Mouse Eating Cheese';
+                mascot.className = 'w-8 h-8 mascot-eat drop-shadow-sm';
+
+                const text = document.createElement('span');
+                text.className = 'z-10';
+                text.textContent = `Comer Pedido (+${o.quantity * 10} XP)`;
+
+                eatBtn.append(mascot, text);
+                card.appendChild(eatBtn);
             } else if (o.status === 'consumed') {
-                statusHtml = `
-                    <div class="mt-3 w-full flex items-center gap-2 text-fluid-xs text-[#9ca3af]">
-                        <iconify-icon icon="solar:check-circle-linear" class="text-[1.1rem] text-[#22c55e]"></iconify-icon> Consumido
-                    </div>
-                `;
+                const consumed = document.createElement('div');
+                consumed.className = 'mt-3 w-full flex items-center gap-2 text-fluid-xs text-[#9ca3af]';
+                consumed.appendChild(createIcon('solar:check-circle-linear', 'text-[1.1rem] text-[#22c55e]'));
+                consumed.append(' Consumido');
+                card.appendChild(consumed);
             }
 
-            list.innerHTML += `
-                <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-3 flex flex-col justify-between items-start transition-all ${o.status === 'ready' ? 'border-[#22c55e]/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : ''}">
-                    <div class="flex justify-between items-start w-full">
-                        <div class="flex flex-col">
-                            <span class="font-['Inter'] font-medium text-fluid-body text-[#f5f5f5]"><span class="text-[#f59e0b]">${o.quantity}x</span> ${o.name}</span>
-                            <span class="font-['JetBrains_Mono'] text-fluid-xs text-[#9ca3af] mt-0.5">${formatCurrency(o.price)} un</span>
-                        </div>
-                        <span class="font-['JetBrains_Mono'] font-medium text-fluid-body text-[#f5f5f5]">${formatCurrency(totalItem)}</span>
-                    </div>
-                    ${statusHtml}
-                </div>
-            `;
+            fragment.appendChild(card);
         });
+
+        list.appendChild(fragment);
     }
 
     // Attach event listeners to eat buttons
