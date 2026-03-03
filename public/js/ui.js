@@ -1,5 +1,7 @@
 import { AppState, ACHIEVEMENTS_DEF } from "./state.js";
-import { api } from "./api.js";
+import { ordersService } from "./services/orders-service.js";
+import { productsService } from "./services/products-service.js";
+import { tablesService } from "./services/tables-service.js";
 // Helper Functions
 function formatCurrency(val) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
@@ -127,16 +129,15 @@ export async function renderScreen1() {
     if (!grid)
         return;
     grid.innerHTML = '<div class="col-span-full text-center text-[#9ca3af] py-10">Carregando salão...</div>';
-    let tables = await api.getTables();
-    let sessions = await api.getSessions();
-    if (!tables || !sessions) {
+    const data = await tablesService.loadTablesAndSessions();
+    if (!data) {
         grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar as mesas agora.</div>';
         return;
     }
-    const activeSessions = sessions.filter(s => !s.closed_at);
+    const activeSessions = tablesService.getActiveSessions(data.sessions);
     grid.innerHTML = '';
-    tables.forEach(t => {
-        const session = activeSessions.find(s => s.table_id === t.id);
+    data.tables.forEach(t => {
+        const session = tablesService.findSessionForTable(t.id, activeSessions);
         const isOccupied = !!session;
         const card = document.createElement('div');
         card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
@@ -157,26 +158,12 @@ export async function renderScreen1() {
                 return;
             }
             else {
-                const openSessionResult = await api.openSession(t.id);
-                if (openSessionResult === null) {
+                const sessionId = await tablesService.openAndResolveSessionId(t.id);
+                if (!sessionId) {
                     showToast('Erro na sessão', 'Não foi possível abrir a mesa agora.', 'solar:danger-circle-linear');
                     return;
                 }
-                // Como o backend (create) pode não retornar o objeto inteiro da sessão (ele retorna status 201 vazio), 
-                // Precisamos buscar as sessões novamente para pegar o ID da que acabou de ser criada
-                const updatedSessions = await api.getSessions();
-                if (!updatedSessions) {
-                    showToast('Erro de sincronização', 'A sessão abriu, mas a interface não conseguiu sincronizar.', 'solar:danger-circle-linear');
-                    return;
-                }
-                const latestSession = [...updatedSessions]
-                    .reverse()
-                    .find(s => s.table_id === t.id && !s.closed_at);
-                if (!latestSession) {
-                    showToast('Erro de sincronização', 'A sessão abriu, mas não foi encontrada para esta mesa.', 'solar:danger-circle-linear');
-                    return;
-                }
-                AppState.currentSessionId = latestSession.id;
+                AppState.currentSessionId = sessionId;
                 AppState.currentTableId = t.table_number;
             }
             AppState.saveState();
@@ -197,7 +184,7 @@ export async function renderScreen2() {
         return;
     if (AppState.menu.length === 0) {
         grid.innerHTML = Array(6).fill(0).map(() => `<div class="h-32 bg-[#1a1a1a]/80 rounded-xl border border-[#2a2a2a] animate-pulse"></div>`).join('');
-        const prods = await api.getProducts();
+        const prods = await productsService.loadProducts();
         if (!prods) {
             grid.innerHTML = '<div class="col-span-full text-center text-[#ef4444] py-10">Não foi possível carregar o cardápio agora.</div>';
             return;
@@ -259,33 +246,12 @@ export async function renderOrders() {
     const list = document.getElementById('orders-list');
     if (!list)
         return;
-    const [ordersFromApi, totalsFromApi] = await Promise.all([
-        api.getOrders(AppState.currentSessionId),
-        api.getOrdersTotal(AppState.currentSessionId)
-    ]);
-    if (ordersFromApi) {
-        const statusByOrderId = new Map(AppState.orders.map(order => [order.id, order.status]));
-        AppState.orders = ordersFromApi.map(order => {
-            const orderId = String(order.id);
-            return {
-                id: orderId,
-                product_id: order.product_id,
-                name: order.name,
-                price: Number(order.price),
-                quantity: Number(order.quantity),
-                total: Number(order.total),
-                status: statusByOrderId.get(orderId) ?? 'preparing',
-                table_session_id: order.table_session_id,
-                created_at: order.created_at,
-                updated_at: order.updated_at
-            };
-        });
-    }
-    if (totalsFromApi) {
-        AppState.sessionTotal = Number(totalsFromApi.total);
-        AppState.sessionItems = Number(totalsFromApi.quantity);
-    }
-    if (ordersFromApi || totalsFromApi) {
+    const statusByOrderId = new Map(AppState.orders.map(order => [order.id, order.status]));
+    const syncResult = await ordersService.syncSessionOrders(AppState.currentSessionId, (orderId) => statusByOrderId.get(orderId) ?? 'preparing');
+    if (syncResult) {
+        AppState.orders = syncResult.orders;
+        AppState.sessionTotal = syncResult.total;
+        AppState.sessionItems = syncResult.quantity;
         AppState.saveState();
     }
     const orders = AppState.orders;

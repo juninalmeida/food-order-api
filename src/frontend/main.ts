@@ -1,6 +1,7 @@
 import "./iconify-local.js";
 import { AppState } from "./state.js";
-import { api } from "./api.js";
+import { ordersService } from "./services/orders-service.js";
+import { tablesService } from "./services/tables-service.js";
 import {
     renderScreen1,
     renderScreen2,
@@ -92,50 +93,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btn = e.currentTarget as HTMLElement;
         const rect = btn.getBoundingClientRect();
 
-        const createOrderResult = await api.createOrder(AppState.currentSessionId, p.id, q);
-        if (createOrderResult === null) {
+        const statusByOrderId = new Map(AppState.orders.map(order => [order.id, order.status]));
+        const createOrderAndSyncResult = await ordersService.createOrderAndSync(
+            AppState.currentSessionId,
+            p.id,
+            q,
+            (orderId) => statusByOrderId.get(orderId) ?? 'preparing'
+        );
+
+        if (!createOrderAndSyncResult) {
             showToast('Erro no pedido', 'Não foi possível registrar o pedido na API.', 'solar:danger-circle-linear');
             return;
         }
 
-        const ordersFromApi = await api.getOrders(AppState.currentSessionId);
-        const latestOrder = ordersFromApi?.at(-1);
-        if (!latestOrder) {
-            showToast('Erro de sincronização', 'Pedido criado, mas não foi possível sincronizar a lista.', 'solar:danger-circle-linear');
-            return;
-        }
-
-        const confirmedOrderId = String(latestOrder.id);
+        const confirmedOrder = createOrderAndSyncResult.order;
+        const confirmedOrderId = confirmedOrder.id;
         const existingOrderIndex = AppState.orders.findIndex(o => o.id === confirmedOrderId);
 
         if (existingOrderIndex > -1) {
-            const existingStatus = AppState.orders[existingOrderIndex].status;
-            AppState.orders[existingOrderIndex] = {
-                id: confirmedOrderId,
-                product_id: latestOrder.product_id,
-                name: latestOrder.name,
-                price: Number(latestOrder.price),
-                quantity: latestOrder.quantity,
-                total: Number(latestOrder.total),
-                status: existingStatus
-            };
+            AppState.orders[existingOrderIndex] = confirmedOrder;
         } else {
-            AppState.orders.push({
-                id: confirmedOrderId,
-                product_id: latestOrder.product_id,
-                name: latestOrder.name,
-                price: Number(latestOrder.price),
-                quantity: latestOrder.quantity,
-                total: Number(latestOrder.total),
-                status: 'preparing'
-            });
+            AppState.orders.push(confirmedOrder);
         }
 
-        const totalsFromApi = await api.getOrdersTotal(AppState.currentSessionId);
-        if (totalsFromApi) {
-            AppState.sessionTotal = Number(totalsFromApi.total);
-            AppState.sessionItems = Number(totalsFromApi.quantity);
-        }
+        AppState.sessionTotal = createOrderAndSyncResult.total;
+        AppState.sessionItems = createOrderAndSyncResult.quantity;
 
         AppState.saveState();
 
@@ -154,9 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
 
         const now = Date.now();
-        let isCombo = false;
         if (now - AppState.lastOrderTime < 30000 && AppState.lastOrderTime !== 0) {
-            isCombo = true;
             const ct = document.createElement('div');
             ct.className = 'combo-text font-["Cinzel"] font-medium text-[clamp(3rem,8vw,5rem)] tracking-tight';
             ct.innerText = 'COMBO x2';
@@ -237,10 +217,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const btn = e.currentTarget as HTMLButtonElement;
+        const defaultCheckoutLabel = '<iconify-icon icon="solar:bill-check-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon> Fechar Conta';
         btn.innerHTML = '<iconify-icon icon="solar:spinner-linear" class="animate-spin text-[1.5rem]"></iconify-icon> Fechando...';
         btn.disabled = true;
 
-        await api.closeSession(AppState.currentSessionId);
+        const closeSessionResult = await tablesService.closeSession(AppState.currentSessionId);
+        if (closeSessionResult === null) {
+            showToast('Erro ao fechar conta', 'Não foi possível fechar a sessão agora.', 'solar:danger-circle-linear');
+            btn.disabled = false;
+            btn.innerHTML = defaultCheckoutLabel;
+            return;
+        }
 
         const scr = document.getElementById('screen-orders');
         if (scr) scr.classList.add('hidden');
@@ -261,7 +248,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         AppState.saveState();
 
         btn.disabled = false;
-        btn.innerHTML = '<iconify-icon icon="solar:bill-check-linear" stroke-width="1.5" class="text-[1.5rem]"></iconify-icon> Fechar Conta';
+        btn.innerHTML = defaultCheckoutLabel;
     });
 
     document.getElementById('btn-new-table')?.addEventListener('click', () => {
@@ -275,7 +262,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (AppState.currentSessionId) {
-            await api.closeSession(AppState.currentSessionId);
+            const closeSessionResult = await tablesService.closeSession(AppState.currentSessionId);
+            if (closeSessionResult === null) {
+                showToast('Erro na sessão', 'Não foi possível encerrar a mesa agora.', 'solar:danger-circle-linear');
+                return;
+            }
+
             AppState.currentSessionId = null;
             AppState.currentTableId = null;
             AppState.saveState();
