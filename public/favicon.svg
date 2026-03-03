@@ -1,0 +1,19 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield Background -->
+  <path d="M50 5 L90 20 L90 50 C90 75 70 90 50 95 C30 90 10 75 10 50 L10 20 Z" fill="#1A1A1A" stroke="#F59E0B" stroke-width="4" stroke-linejoin="round" />
+  <!-- Inner Glow/Path -->
+  <path d="M50 12 L82 25 L82 50 C82 70 65 83 50 87 C35 83 18 70 18 50 L18 25 Z" fill="#2A2A2A" />
+  
+  <!-- Chef Hat -->
+  <path d="M35 55 C30 55 25 50 25 45 C25 35 32 32 35 32 C35 22 45 15 50 15 C55 15 65 22 65 32 C68 32 75 35 75 45 C75 50 70 55 65 55 Z" fill="#F5F5F5" />
+  
+  <!-- Bottom band of hat -->
+  <rect x="35" y="55" width="30" height="10" rx="2" fill="#E5E5E5" />
+  
+  <!-- Golden Star on the hat -->
+  <polygon points="50,30 52,36 58,36 53,40 55,46 50,43 45,46 47,40 42,36 48,36" fill="#F59E0B" />
+  
+  <!-- Fire below -->
+  <path d="M42 75 C42 75 50 62 48 80 C48 80 50 82 52 76 C52 76 58 65 55 82 C55 82 50 90 42 75 Z" fill="#EF4444" />
+  <path d="M45 78 C45 78 50 70 49 81 C49 81 50 82 51 78 C51 78 54 71 52 82 C52 82 50 86 45 78 Z" fill="#FBBF24" />
+</svg>
