@@ -1,0 +1,71 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @keyframes nibble {
+        0%, 100% { transform: translateY(0) rotate(0); }
+        25% { transform: translateY(-2px) rotate(-1deg); }
+        50% { transform: translateY(0) rotate(0); }
+        75% { transform: translateY(-1px) rotate(1deg); }
+      }
+      @keyframes chew {
+        0%, 100% { transform: scaleY(1); }
+        50% { transform: scaleY(0.7); }
+      }
+      @keyframes blink {
+        0%, 96%, 100% { transform: scaleY(1); }
+        98% { transform: scaleY(0); }
+      }
+      @keyframes swallow {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(2px); }
+      }
+      
+      .mouse-head { animation: nibble 0.3s infinite; transform-origin: 30px 50px; }
+      .mouse-jaw { animation: chew 0.3s infinite; transform-origin: 40px 60px; }
+      .mouse-eye { animation: blink 3s infinite; transform-origin: 45px 35px; }
+      .cheese-crumb { animation: swallow 0.3s infinite; }
+    </style>
+  </defs>
+
+  <!-- Cheese block -->
+  <path d="M70,80 L95,60 L85,30 L60,40 Z" fill="#FBBF24" />
+  <path d="M60,40 L85,30 L75,20 L55,25 Z" fill="#FDE68A" />
+  <path d="M60,40 L55,25 L50,60 Z" fill="#D97706" />
+  
+  <!-- Cheese holes -->
+  <circle cx="75" cy="50" r="4" fill="#D97706" />
+  <circle cx="85" cy="45" r="3" fill="#D97706" />
+  <circle cx="68" cy="35" r="2.5" fill="#D97706" />
+
+  <g class="mouse-head">
+    <!-- Mouse Ear -->
+    <circle cx="28" cy="28" r="14" fill="#9CA3AF" />
+    <circle cx="30" cy="30" r="8" fill="#FCA5A5" />
+    
+    <!-- Mouse Body/Head -->
+    <path d="M20,65 C20,35 45,30 60,45 C65,50 68,55 60,65 Z" fill="#9CA3AF" />
+    
+    <!-- Mouse Snout/Upper Jaw -->
+    <path d="M45,45 Q65,42 65,52 Q50,55 45,55 Z" fill="#9CA3AF" />
+    <circle cx="65" cy="50" r="3" fill="#1F2937" /> <!-- Nose line -->
+    
+    <!-- Mouse Eye -->
+    <g class="mouse-eye">
+      <circle cx="45" cy="42" r="3" fill="#1F2937" />
+      <circle cx="46" cy="41" r="1" fill="#FFFFFF" />
+    </g>
+
+    <!-- Moving Jaw -->
+    <path class="mouse-jaw" d="M45,55 Q60,55 60,60 Q50,65 40,60 Z" fill="#6B7280" />
+    
+    <!-- Whisker -->
+    <path d="M60,52 L75,48" stroke="#1F2937" stroke-width="1" fill="none" />
+    <path d="M60,54 L75,56" stroke="#1F2937" stroke-width="1" fill="none" />
+  </g>
+  
+  <!-- Flying crumbs -->
+  <g class="cheese-crumb">
+    <rect x="62" y="52" width="3" height="3" fill="#FDE68A" transform="rotate(15 62 52)" />
+    <rect x="65" y="48" width="2" height="2" fill="#FBBF24" transform="rotate(45 65 48)" />
+  </g>
+</svg>

@@ -262,11 +262,7 @@ export async function renderOrders() {
                 statusHtml = `
                     <button class="mt-3 w-full py-3 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/50 text-[#22c55e] font-medium text-fluid-xs hover:bg-[#22c55e]/20 transition-all clickable btn-eat flex items-center justify-center gap-3 relative overflow-hidden" data-id="${o.id}">
                         <!-- Mascote SVG Animado -->
-                        <svg class="mascot-eat" viewBox="0 0 100 100" width="28" height="28">
-                            <circle cx="50" cy="50" r="40" fill="#22c55e" />
-                            <circle cx="65" cy="30" r="6" fill="#1a1a1a" />
-                            <path class="mascot-mouth" d="M50,50 L100,25 A40,40 0 0,1 100,75 Z" fill="#1a1a1a" />
-                        </svg>
+                        <img src="/assets/icons/mouse-eating.svg" alt="Mouse Eating Cheese" class="w-8 h-8 mascot-eat drop-shadow-sm" />
                         <span class="z-10">Comer Pedido (+${o.quantity * 10} XP)</span>
                     </button>
                 `;
