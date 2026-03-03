@@ -1,24 +1,30 @@
 import { Knex } from "knex";
 
 export async function seed(knex: Knex): Promise<void> {
-  await knex("tables_sessions").del();
-  await knex("tables").del();
+  const defaultTableNumbers = [1, 2, 3, 4, 5, 6];
 
-  const tables = await knex("tables").insert([
-    { table_number: 1 },
-    { table_number: 2 },
-    { table_number: 3 },
-    { table_number: 4 },
-    { table_number: 5 },
-    { table_number: 6 }
-  ]).returning("id");
+  const existingTables = await knex("tables").select<{ table_number: number }[]>("table_number");
+  const existingTableNumbers = new Set(existingTables.map((table) => table.table_number));
 
-  // Create an active session for table 2 to test "Occupied" state in UI
-  if (tables && tables.length >= 2) {
-    const tableId = typeof tables[1] === 'object' ? tables[1].id : tables[1];
+  const missingTables = defaultTableNumbers
+    .filter((tableNumber) => !existingTableNumbers.has(tableNumber))
+    .map((tableNumber) => ({ table_number: tableNumber }));
 
-    await knex("tables_sessions").insert([
-      { table_id: tableId, opened_at: Date.now() }
-    ]);
+  if (missingTables.length > 0) {
+    await knex("tables").insert(missingTables);
+  }
+
+  const secondTable = await knex("tables")
+    .where({ table_number: 2 })
+    .first<{ id: number }>("id");
+
+  if (!secondTable) return;
+
+  const hasAnySession = await knex("tables_sessions").first("id");
+  if (!hasAnySession) {
+    await knex("tables_sessions").insert({
+      table_id: secondTable.id,
+      opened_at: knex.fn.now(),
+    });
   }
 }
