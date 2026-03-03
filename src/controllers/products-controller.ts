@@ -1,25 +1,35 @@
 import { NextFunction, Request, Response } from "express";
-import { AppError } from "@/utils/app-error";
-import { knex } from "@/database/knex";
 import { z } from "zod";
-import { ProductRepository } from "@/database/types/product-repository";
+import { ProductsRepository } from "@/repositories/products-repository";
+import { ProductsService } from "@/services/products-service";
 
 class ProductsController {
-  async index(request: Request, response: Response, next: NextFunction) {
+  private readonly productsService: ProductsService;
+
+  constructor() {
+    this.productsService = new ProductsService(new ProductsRepository());
+  }
+
+  index = async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const { name } = request.query;
-      const products = await knex<ProductRepository>("products")
-        .select()
-        .whereLike("name", `%${name ?? ""}%`)
-        .orderBy("name");
+      const querySchema = z.object({
+        name: z.string().optional(),
+      });
+
+      const { name } = querySchema.parse(request.query);
+      const products = await this.productsService.index(name ?? "");
 
       return response.json(products);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async create(request: Request, response: Response, next: NextFunction) {
+  create = async (
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) => {
     try {
       const bodySchema = z.object({
         name: z.string({ required_error: "Name is required!" }).trim().min(6),
@@ -28,15 +38,19 @@ class ProductsController {
 
       const { name, price } = bodySchema.parse(request.body);
 
-      await knex<ProductRepository>("products").insert({ name, price });
+      await this.productsService.create(name, price);
 
       return response.status(201).json();
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async update(request: Request, response: Response, next: NextFunction) {
+  update = async (
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) => {
     try {
       const id = z
         .string()
@@ -51,26 +65,19 @@ class ProductsController {
 
       const { name, price } = bodySchema.parse(request.body);
 
-      const product = await knex<ProductRepository>("products")
-        .select()
-        .where({ id })
-        .first();
-
-      if (!product) {
-        throw new AppError("Product not found!", 404);
-      }
-
-      await knex<ProductRepository>("products")
-        .update({ name, price, updated_at: knex.fn.now() })
-        .where({ id });
+      await this.productsService.update(id, { name, price });
 
       return response.json();
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async remove(request: Request, response: Response, next: NextFunction) {
+  remove = async (
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) => {
     try {
       const id = z
         .string()
@@ -78,22 +85,13 @@ class ProductsController {
         .refine((value) => !isNaN(value), { message: "ID must be a number!" })
         .parse(request.params.id);
 
-      const product = await knex<ProductRepository>("products")
-        .select()
-        .where({ id })
-        .first();
-
-      if (!product) {
-        throw new AppError("Product not found!", 404);
-      }
-
-      await knex<ProductRepository>("products").delete().where({ id });
+      await this.productsService.remove(id);
 
       return response.json();
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
 
 export { ProductsController };

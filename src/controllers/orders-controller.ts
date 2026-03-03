@@ -1,11 +1,26 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "@/utils/app-error";
-import { knex } from "@/database/knex";
 import { z } from "zod";
-import { ProductRepository } from "@/database/types/product-repository";
+import { OrdersRepository } from "@/repositories/orders-repository";
+import { ProductsRepository } from "@/repositories/products-repository";
+import { TablesSessionsRepository } from "@/repositories/tables-sessions-repository";
+import { OrdersService } from "@/services/orders-service";
 
 class OrdersController {
-  async create(request: Request, response: Response, next: NextFunction) {
+  private readonly ordersService: OrdersService;
+
+  constructor() {
+    this.ordersService = new OrdersService(
+      new OrdersRepository(),
+      new ProductsRepository(),
+      new TablesSessionsRepository(),
+    );
+  }
+
+  create = async (
+    request: Request,
+    response: Response,
+    next: NextFunction,
+  ) => {
     try {
       const bodySchema = z.object({
         table_session_id: z.number(),
@@ -17,82 +32,53 @@ class OrdersController {
         request.body,
       );
 
-      const session = await knex<TablesSessionsRepository>("tables_sessions")
-        .where({ id: table_session_id })
-        .first();
-
-      if (!session) {
-        throw new AppError("Table session not found");
-      }
-
-      if (session.closed_at) {
-        throw new AppError("Table session is closed");
-      }
-
-      const product = await knex<ProductRepository>("products")
-        .where({ id: product_id })
-        .first();
-
-      if (!product) {
-        throw new AppError("Product not found");
-      }
-
-      await knex<OrderRepository>("orders").insert({
-        table_session_id: table_session_id,
-        product_id: product_id,
-        quantity: quantity,
-        price: product.price,
+      await this.ordersService.create({
+        table_session_id,
+        product_id,
+        quantity,
       });
 
       return response.status(201).json();
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async index(request: Request, response: Response, next: NextFunction) {
+  index = async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const { table_session_id } = request.params;
+      const tableSessionId = z
+        .string()
+        .transform((value) => Number(value))
+        .refine((value) => !isNaN(value), {
+          message: "table_session_id must be a number",
+        })
+        .parse(request.params.table_session_id);
 
-      const order = await knex("orders")
-        .select(
-          "orders.id",
-          "orders.table_session_id",
-          "orders.product_id",
-          "products.name",
-          "orders.price",
-          "orders.quantity",
-          knex.raw("(orders.price * orders.quantity) AS total"),
-          "orders.created_at",
-          "orders.updated_at",
-        )
-        .join("products", "products.id", "orders.product_id")
-        .where({ table_session_id })
-        .orderBy("orders.created_at");
+      const order = await this.ordersService.index(tableSessionId);
 
       return response.json(order);
     } catch (error) {
       next(error);
     }
-  }
+  };
 
-  async show(request: Request, response: Response, next: NextFunction) {
+  show = async (request: Request, response: Response, next: NextFunction) => {
     try {
-      const { table_session_id } = request.params;
+      const tableSessionId = z
+        .string()
+        .transform((value) => Number(value))
+        .refine((value) => !isNaN(value), {
+          message: "table_session_id must be a number",
+        })
+        .parse(request.params.table_session_id);
 
-      const order = await knex("orders")
-        .select(
-          knex.raw("COALESCE(SUM(orders.price * orders.quantity), 0) AS total"),
-          knex.raw("COALESCE(SUM(orders.quantity), 0) AS quantity"),
-        )
-        .where({ table_session_id })
-        .first();
+      const order = await this.ordersService.showTotals(tableSessionId);
 
       return response.json(order);
     } catch (error) {
       next(error);
     }
-  }
+  };
 }
 
 export { OrdersController };
