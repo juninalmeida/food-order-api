@@ -21,6 +21,10 @@ function resolveCorsOptions(): CorsOptions {
   const allowedOrigins = parseCorsOrigins(process.env.CORS_ORIGIN);
 
   if (allowedOrigins.length === 0) {
+    if (NODE_ENV === "production") {
+      return { origin: false };
+    }
+
     return { origin: true };
   }
 
@@ -45,6 +49,7 @@ function buildContentSecurityPolicy(): string {
 const app = express();
 
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
 app.use(cors(resolveCorsOptions()));
 app.use(express.json({ limit: "16kb" }));

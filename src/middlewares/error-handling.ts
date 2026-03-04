@@ -8,6 +8,8 @@ export function errorHandling(
   response: Response,
   _: NextFunction,
 ) {
+  const isProduction = (process.env.NODE_ENV ?? "development") === "production";
+
   if (error instanceof AppError) {
     return response.status(error.statusCode).json({ message: error.message });
   }
@@ -18,5 +20,11 @@ export function errorHandling(
       .json({ message: "validation error", issues: error.format() });
   }
 
-  return response.status(500).json({ message: error.message });
+  console.error(`[${request.method}] ${request.originalUrl}`, error);
+
+  if (isProduction) {
+    return response.status(500).json({ message: "internal server error" });
+  }
+
+  return response.status(500).json({ message: error?.message ?? "unknown error" });
 }
