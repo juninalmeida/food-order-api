@@ -310,6 +310,11 @@ async function handleCheckoutClick(e: Event) {
 }
 
 async function handleBackToTablesClick() {
+    if (AppState.orders.length > 0) {
+        showToast('Atenção', 'Você já possui pedidos nesta mesa. Feche a conta para sair.', 'solar:danger-circle-linear');
+        return;
+    }
+
     if (AppState.currentSessionId) {
         const closeSessionResult = await tablesService.closeSession(AppState.currentSessionId);
         if (closeSessionResult === null) {
