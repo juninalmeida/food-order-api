@@ -98,7 +98,7 @@ _A organização aparta responsabilidades puramente HTTP perante a coesão de in
 
 ## 📈 Métricas & Insights
 
-Este repositório sendo **Público**, o avanço e constância dos commits é visualizável nos \*\*[Insights do GitHub]
+Este repositório sendo **Público**, o avanço e constância dos commits é visualizável no repositorio
 
 ## 👨‍💻 Autor
 
