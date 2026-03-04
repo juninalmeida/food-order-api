@@ -3,8 +3,6 @@ import { Product } from "./types.js";
 import { ordersService } from "./services/orders-service.js";
 import { productsService } from "./services/products-service.js";
 import { tablesService } from "./services/tables-service.js";
-
-// Helper Functions
 function formatCurrency(val: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 }
@@ -157,7 +155,6 @@ export function updateCartBadge() {
     }
 }
 
-// Screens
 export function showScreen(id: string) {
     ['screen-tables', 'screen-menu', 'screen-summary'].forEach(s => {
         const el = document.getElementById(s);
@@ -185,8 +182,9 @@ export async function renderScreen1() {
 
     grid.innerHTML = '';
     data.tables.forEach(t => {
+        const isReservedUiTable = t.table_number === 1;
         const session = tablesService.findSessionForTable(t.id, activeSessions);
-        const isOccupied = !!session;
+        const isOccupied = isReservedUiTable || !!session;
 
         const card = document.createElement('div');
         card.className = `relative aspect-square rounded-2xl border flex flex-col items-center justify-center cursor-pointer transition-all duration-300 clickable ${isOccupied ? 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#2a2a2a] opacity-60' : 'bg-[#1a1a1a]/80 backdrop-blur-md border-[#f59e0b]/40 hover-glow animate-pulse-gold'}`;
@@ -206,8 +204,12 @@ export async function renderScreen1() {
         card.append(tableNumber, availability);
 
         card.onclick = async () => {
+            if (isReservedUiTable) {
+                showToast('Mesa Indisponível', 'A mesa 01 fica ocupada para demonstração da interface.', 'solar:lock-password-linear');
+                return;
+            }
+
             if (isOccupied && session) {
-                // Nova Regra: Não permitir entrar em mesa ocupada!
                 showToast('Mesa Indisponível', 'Esta mesa já está ocupada por outros clientes.', 'solar:lock-password-linear');
                 return;
             } else {
@@ -291,7 +293,6 @@ export async function renderScreen2() {
         (btn as HTMLElement).onclick = (e) => {
             const idAttr = (e.currentTarget as HTMLElement).getAttribute('data-id');
             if (idAttr) {
-                // We dispatch a custom event to handled in main.ts
                 window.dispatchEvent(new CustomEvent('openQtyModal', { detail: { id: parseInt(idAttr, 10) } }));
             }
         };
@@ -417,7 +418,6 @@ export async function renderOrders() {
         list.appendChild(fragment);
     }
 
-    // Attach event listeners to eat buttons
     document.querySelectorAll('.btn-eat').forEach(btn => {
         (btn as HTMLElement).onclick = (e) => {
             const idAttr = (e.currentTarget as HTMLElement).getAttribute('data-id');

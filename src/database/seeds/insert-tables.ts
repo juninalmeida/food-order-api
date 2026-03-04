@@ -14,16 +14,33 @@ export async function seed(knex: Knex): Promise<void> {
     await knex("tables").insert(missingTables);
   }
 
-  const secondTable = await knex("tables")
-    .where({ table_number: 2 })
+  const firstTable = await knex("tables")
+    .where({ table_number: 1 })
     .first<{ id: number }>("id");
 
-  if (!secondTable) return;
+  if (!firstTable) return;
 
-  const hasAnySession = await knex("tables_sessions").first("id");
-  if (!hasAnySession) {
+  await knex("tables_sessions")
+    .whereNull("closed_at")
+    .whereNot({ table_id: firstTable.id })
+    .update({ closed_at: knex.fn.now() });
+
+  const openFirstTableSessions = await knex("tables_sessions")
+    .where({ table_id: firstTable.id })
+    .whereNull("closed_at")
+    .orderBy("opened_at", "desc")
+    .select<{ id: number }[]>("id");
+
+  if (openFirstTableSessions.length > 1) {
+    const staleOpenSessions = openFirstTableSessions.slice(1).map((session) => session.id);
+    await knex("tables_sessions")
+      .whereIn("id", staleOpenSessions)
+      .update({ closed_at: knex.fn.now() });
+  }
+
+  if (openFirstTableSessions.length === 0) {
     await knex("tables_sessions").insert({
-      table_id: secondTable.id,
+      table_id: firstTable.id,
       opened_at: knex.fn.now(),
     });
   }

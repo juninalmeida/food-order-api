@@ -37,6 +37,19 @@ function clearCurrentSessionState() {
     AppState.saveState();
 }
 
+function requestCloseSessionForExit(sessionId: number) {
+    const closeOnExitPath = `/tables-sessions/${sessionId}/close-on-exit`;
+
+    if (typeof navigator.sendBeacon === 'function' && navigator.sendBeacon(closeOnExitPath)) {
+        return;
+    }
+
+    void fetch(closeOnExitPath, {
+        method: 'POST',
+        keepalive: true
+    }).catch(() => undefined);
+}
+
 function closeSessionOnPageExit() {
     if (!AppState.currentSessionId) return;
 
@@ -44,19 +57,17 @@ function closeSessionOnPageExit() {
     if (lastSessionClosedOnExitId === sessionId) return;
 
     lastSessionClosedOnExitId = sessionId;
-
-    void fetch(`/tables-sessions/${sessionId}`, {
-        method: 'PATCH',
-        keepalive: true,
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }).catch(() => undefined);
-
+    requestCloseSessionForExit(sessionId);
     clearCurrentSessionState();
 }
 
 function bindPageLifecycleHandlers() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            closeSessionOnPageExit();
+        }
+    });
+
     window.addEventListener('pagehide', () => {
         closeSessionOnPageExit();
     });
@@ -64,6 +75,19 @@ function bindPageLifecycleHandlers() {
     window.addEventListener('beforeunload', () => {
         closeSessionOnPageExit();
     });
+}
+
+async function recoverSessionFromPreviousNavigation() {
+    if (!AppState.currentSessionId) return;
+
+    const sessionId = AppState.currentSessionId;
+    const closeSessionResult = await tablesService.closeSession(sessionId);
+
+    if (closeSessionResult === null) {
+        requestCloseSessionForExit(sessionId);
+    }
+
+    clearCurrentSessionState();
 }
 
 function bindGlobalClickHandler() {
@@ -286,11 +310,6 @@ async function handleCheckoutClick(e: Event) {
 }
 
 async function handleBackToTablesClick() {
-    if (AppState.orders.length > 0) {
-        showToast('Atenção', 'Você não pode sair da mesa com pedidos em andamento. Feche a conta.', 'solar:danger-circle-linear');
-        return;
-    }
-
     if (AppState.currentSessionId) {
         const closeSessionResult = await tablesService.closeSession(AppState.currentSessionId);
         if (closeSessionResult === null) {
@@ -322,9 +341,10 @@ function bindScreenActions() {
     });
 }
 
-function onDomReady() {
+async function onDomReady() {
     bindScreenActions();
     bindSidebarActions();
+    await recoverSessionFromPreviousNavigation();
     renderScreen1();
 }
 
@@ -338,8 +358,10 @@ export function initAppController() {
     bindPageLifecycleHandlers();
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', onDomReady, { once: true });
+        document.addEventListener('DOMContentLoaded', () => {
+            void onDomReady();
+        }, { once: true });
     } else {
-        onDomReady();
+        void onDomReady();
     }
 }

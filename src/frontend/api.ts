@@ -1,13 +1,11 @@
 import { Product, Table, TableSession, ApiOrder } from "./types.js";
 
-// Use relative path for API calls since frontend is served by the same server
 const API_BASE = '';
 
 export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             headers: { 'Content-Type': 'application/json' },
-            // @ts-ignore
             cache: 'no-store',
             ...options
         });
@@ -18,7 +16,6 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
             return null;
         }
 
-        // Some endpoints like POST, PATCH might return empty bodies
         const text = await res.text();
         return text ? JSON.parse(text) : ({} as T);
     } catch (err) {

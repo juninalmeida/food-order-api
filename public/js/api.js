@@ -1,10 +1,8 @@
-// Use relative path for API calls since frontend is served by the same server
 const API_BASE = '';
 export async function fetchAPI(endpoint, options = {}) {
     try {
         const res = await fetch(`${API_BASE}${endpoint}`, {
             headers: { 'Content-Type': 'application/json' },
-            // @ts-ignore
             cache: 'no-store',
             ...options
         });
@@ -12,7 +10,6 @@ export async function fetchAPI(endpoint, options = {}) {
             console.error(`API Error on ${endpoint}: ${res.status} ${res.statusText}`);
             return null;
         }
-        // Some endpoints like POST, PATCH might return empty bodies
         const text = await res.text();
         return text ? JSON.parse(text) : {};
     }

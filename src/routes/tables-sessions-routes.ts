@@ -8,5 +8,10 @@ const tablesSessionsController = new TablesSessionsController();
 tablesSessionsRoutes.get("/", tablesSessionsController.index);
 tablesSessionsRoutes.post("/", writeRateLimit, tablesSessionsController.create);
 tablesSessionsRoutes.patch("/:id", writeRateLimit, tablesSessionsController.update);
+tablesSessionsRoutes.post(
+  "/:id/close-on-exit",
+  writeRateLimit,
+  tablesSessionsController.update,
+);
 
 export { tablesSessionsRoutes };
